@@ -2,3 +2,4 @@ tmp/
 .env
 __debug_bin
 .vscode
+site
