@@ -1,2 +1,3 @@
-# Switchboard
-## Open Source Mock Services Suite
+# Switchboard Documentation
+
+Switchboard is an open source mock services generator.

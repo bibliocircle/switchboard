@@ -2,6 +2,7 @@ site_name: Switchboard Docs
 repo_name: deepal/switchboard
 repo_url: https://github.com/deepal/switchboard
 site_description: Open Source Mock Services Generator
+edit_uri: edit/main/docs
 theme:
   name: material
   features:
@@ -11,14 +12,14 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-      primary: indigo
-      accent: indigo
+      primary: teal
+      accent: teal
     - scheme: slate
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
-      primary: blue
-      accent: blue
+      primary: teal
+      accent: teal
 markdown_extensions:
     - admonition
     - pymdownx.details
@@ -51,3 +52,15 @@ extra:
 nav:
   - Introduction:
     - Overview: index.md
+  - Mock Services:
+    - Introduction: mockservices/ms-intro.md
+  - Workspaces:
+    - Introduction: workspaces/ws-intro.md
+  - Importing:
+    - Import Open API Spec: importing/openapi-import.md
+  - API:
+    - Setting up: api/setup.md
+    - Mock Services: api/mock-services.md
+    - Authentication: api/auth.md
+  - Tags 🏷: tags.md
+  - Roadmap 🏁 : roadmap.md

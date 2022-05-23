@@ -1,0 +1,1 @@
+Switchboard exposes a configuration API that can be used to dynamically change mock service configurations for automated testing. This is particularly useful to programmatically change the mock services' behaviours in tests and observe how the application behaves.
