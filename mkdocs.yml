@@ -61,6 +61,9 @@ nav:
   - API:
     - Setting up: api/setup.md
     - Mock Services: api/mock-services.md
+    - Scenarios: api/mock-services.md
+    - Workspaces: api/workspaces.md
+    - History: api/workspaces.md
     - Authentication: api/auth.md
   - Tags 🏷: tags.md
   - Roadmap 🏁 : roadmap.md

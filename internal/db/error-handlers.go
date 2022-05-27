@@ -2,7 +2,7 @@ package db
 
 import (
 	"errors"
-	"switchboard/util"
+	"switchboard/internal/util"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )

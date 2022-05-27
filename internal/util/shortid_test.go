@@ -2,8 +2,8 @@ package util_test
 
 import (
 	"fmt"
-	"switchboard/testutils"
-	"switchboard/util"
+	"switchboard/internal/testutils"
+	"switchboard/internal/util"
 	"testing"
 )
 

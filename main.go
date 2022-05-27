@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
-	"switchboard/db"
-	"switchboard/middleware"
+	"switchboard/internal/db"
+	"switchboard/internal/middleware"
+	"switchboard/internal/util"
 
 	"github.com/gin-gonic/gin"
 	env "github.com/joho/godotenv"
@@ -31,6 +33,22 @@ func main() {
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.Writer.Write([]byte("pong"))
+	})
+
+	r.POST("/randomjson", func(c *gin.Context) {
+		jsonData, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.Status(500)
+		}
+		c.Header("Content-Type", "application/json")
+
+		c.Stream(func(w io.Writer) bool {
+			err := util.GenFakeJson(string(jsonData), w)
+			if err != nil {
+				log.Println(err)
+			}
+			return false
+		})
 	})
 
 	log.Println("Starting server...")

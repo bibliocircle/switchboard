@@ -11,6 +11,7 @@ require (
 )
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.16.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
@@ -38,4 +39,5 @@ require (
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	rogchap.com/v8go v0.7.0 // indirect
 )

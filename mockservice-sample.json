@@ -1,0 +1,46 @@
+{
+    "id": "e41b0869-e3b0-4db1-a3d0-b1708eb8190f",
+    "title": "Orders Mock Service",
+    "type": "REST",
+    "endpoints": {
+        "path": "/orders",
+        "method": "GET",
+        "scenarios": [
+            {
+                "type": "HTTP_RESPONSE",
+                "config": {
+                    "statusCode": 200
+                }
+            }
+        ]
+    },
+    "globalConfig": {
+        "cors": {
+            "allowedOrigins": [
+                "test.example.com"
+            ],
+            "allowedMethods": [
+                "GET",
+                "POST",
+                "DELETE",
+                "PUT"
+            ],
+            "allowedHeaders": []
+        },
+        "defaultResponseHeaders": {
+            "x-mocked-response": true
+        },
+        "upstreams": [
+            {
+                "name": "Orders API Dev",
+                "url": "https://dev.example.com/orders"
+            },
+            {
+                "name": "Orders API Staging",
+                "url": "https://staging.example.com/orders"
+            }
+        ]
+    },
+    "createdAt": "2022-05-25T20:00:04.522Z",
+    "updatedAt": "2022-05-25T20:00:04.522Z"
+}
