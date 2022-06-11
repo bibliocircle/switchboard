@@ -1,13 +1,13 @@
-package util_test
+package common_test
 
 import (
 	"fmt"
+	"switchboard/internal/common"
 	"switchboard/internal/testutils"
-	"switchboard/internal/util"
 	"testing"
 )
 
 func TestShortIdGen(t *testing.T) {
-	id := util.GetShortId()
+	id := common.GetShortId()
 	testutils.Equals(t, fmt.Sprintf("%T", id), "string")
 }

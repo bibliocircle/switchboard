@@ -6,9 +6,10 @@ import (
 	"io"
 	"log"
 	"os"
-	"switchboard/internal/db"
-	"switchboard/internal/middleware"
-	"switchboard/internal/util"
+	"switchboard/internal/common"
+	"switchboard/internal/common/auth"
+	"switchboard/internal/common/db"
+	"switchboard/internal/common/middleware"
 
 	"github.com/gin-gonic/gin"
 	env "github.com/joho/godotenv"
@@ -35,6 +36,14 @@ func main() {
 		c.Writer.Write([]byte("pong"))
 	})
 
+	r.POST("/auth/login", auth.LoginRoute)
+	r.POST("/auth/signup", auth.SignUpRoute)
+	r.POST("/auth/logout", auth.LogOutRoute)
+
+	r.Use(auth.ParseAuthToken())
+	r.Use(auth.RequireAuthentication())
+
+	// temporary endpoints to test random data generator
 	r.POST("/randomjson", func(c *gin.Context) {
 		jsonData, err := io.ReadAll(c.Request.Body)
 		if err != nil {
@@ -43,7 +52,7 @@ func main() {
 		c.Header("Content-Type", "application/json")
 
 		c.Stream(func(w io.Writer) bool {
-			err := util.GenFakeJson(string(jsonData), w)
+			err := common.GenFakeJson(string(jsonData), w)
 			if err != nil {
 				log.Println(err)
 			}

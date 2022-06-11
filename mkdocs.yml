@@ -53,17 +53,18 @@ nav:
   - Introduction:
     - Overview: index.md
   - Mock Services:
-    - Introduction: mockservices/ms-intro.md
+    - REST Mock Services: mockservices/rest.md
+    - Random Data Generation: mockservices/templating.md
   - Workspaces:
     - Introduction: workspaces/ws-intro.md
   - Importing:
     - Import Open API Spec: importing/openapi-import.md
-  - API:
+  - Configuration API:
     - Setting up: api/setup.md
     - Mock Services: api/mock-services.md
     - Scenarios: api/mock-services.md
     - Workspaces: api/workspaces.md
-    - History: api/workspaces.md
+    - Activity: api/activity.md
     - Authentication: api/auth.md
   - Tags 🏷: tags.md
   - Roadmap 🏁 : roadmap.md

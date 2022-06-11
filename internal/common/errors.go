@@ -1,4 +1,4 @@
-package util
+package common
 
 type DetailedError struct {
 	ErrorCode   string `json:"errorCode"`
@@ -31,3 +31,5 @@ var ErrorDuplicateEntity = "DUPLICATE_ENTITY"
 var ErrorPasswordMismatch = "PASSWORD_MISMATCH"
 var ErrorPayloadMissingRequiredFields = "PAYLOAD_MISSING_REQUIRED_FIELDS"
 var ErrorUnparsablePayload = "UNPARSABLE_PAYLOAD"
+var ErrorUserExists = "USER_ALREADY_EXISTS"
+var ErrAuthTokenExpired = "AUTH_TOKEN_EXPIRED"

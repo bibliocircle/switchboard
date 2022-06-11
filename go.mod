@@ -3,15 +3,18 @@ module switchboard
 go 1.18
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.16.0
 	github.com/gin-gonic/gin v1.7.2
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/joho/godotenv v1.3.0
+	github.com/mitchellh/mapstructure v1.5.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125
 	go.mongodb.org/mongo-driver v1.7.3
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 )
 
 require (
-	github.com/brianvoe/gofakeit/v6 v6.16.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
@@ -19,6 +22,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -39,5 +43,4 @@ require (
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	rogchap.com/v8go v0.7.0 // indirect
 )

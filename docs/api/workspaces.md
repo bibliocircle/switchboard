@@ -1,9 +1,9 @@
-## Listing Mock Services
+## List Workspaces
 
 **Request**
 
 ```txt
-GET /configuration/mock-services
+GET /configuration/workspaces
 ```
 
 **Response**
@@ -17,28 +17,26 @@ GET /configuration/mock-services
   "data": [
     {
       "id": "e8c5772e-686f-41de-aed5-2dc0dc3f5f65",
-      "type": "REST",
-      "title": "Orders mock service",
-      "createdAt": "2022-05-23T19:58:39.814Z",
-      "updatedAt": "2022-05-23T19:58:39.814Z"
+      "name": "Awesome Workspace",
+      "createdAt": "2022-06-04T12:04:39.531Z",
+      "expiresAt": "2022-06-21T12:04:39.531Z"
     },
     {
-      "id": "aca7751a-b529-4aa3-9f4f-d462164b4ada",
-      "type": "REST",
-      "title": "Auth mock service",
-      "createdAt": "2022-05-23T19:58:39.814Z",
-      "updatedAt": "2022-05-23T19:58:39.814Z"
+      "id": "57de2403-855b-4d66-b872-813cd8525f56",
+      "name": "Pinocchio's workspace",
+      "createdAt": "2022-06-04T12:04:39.531Z",
+      "expiresAt": "2022-06-21T12:04:39.531Z"
     }
   ]
 }
 ```
 
-## Retrieving Mock Service Configuration
+## Get Workspace Configuration
 
 **Request**
 
 ```txt
-GET /configuration/mock-service/:mockServiceId
+GET /configuration/workspace/:workspaceId
 ```
 
 **Response**

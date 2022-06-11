@@ -1,4 +1,4 @@
-package util
+package common
 
 import (
 	sid "github.com/teris-io/shortid"
