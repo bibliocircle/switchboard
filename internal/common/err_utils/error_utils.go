@@ -1,4 +1,4 @@
-package common
+package err_utils
 
 type DetailedError struct {
 	ErrorCode   string `json:"errorCode"`
@@ -25,11 +25,3 @@ func WrapAsDetailedError(err error) *DetailedError {
 		Description: err.Error(),
 	}
 }
-
-var ErrorGeneric = "GENERIC_ERROR"
-var ErrorDuplicateEntity = "DUPLICATE_ENTITY"
-var ErrorPasswordMismatch = "PASSWORD_MISMATCH"
-var ErrorPayloadMissingRequiredFields = "PAYLOAD_MISSING_REQUIRED_FIELDS"
-var ErrorUnparsablePayload = "UNPARSABLE_PAYLOAD"
-var ErrorUserExists = "USER_ALREADY_EXISTS"
-var ErrAuthTokenExpired = "AUTH_TOKEN_EXPIRED"

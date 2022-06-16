@@ -1,0 +1,18 @@
+[
+    {
+        "dropIndexes": "mockservices",
+        "index": "primary_id"
+    },
+    {
+        "dropIndexes": "endpoints",
+        "index": "primary_id"
+    },
+    {
+        "dropIndexes": "scenarios",
+        "indexe": "primary_id"
+    },
+    {
+        "dropIndexes": "upstreams",
+        "index":  "primary_id"
+    }
+]

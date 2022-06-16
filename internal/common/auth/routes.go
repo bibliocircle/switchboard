@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"switchboard/internal/common"
+	"switchboard/internal/common/err_utils"
 	"switchboard/internal/crud/user"
 
 	"github.com/gin-gonic/gin"
@@ -31,14 +31,14 @@ type LoginResponse struct {
 func LoginRoute(c *gin.Context) {
 	var payload LoginPayload
 	if err := json.NewDecoder(c.Request.Body).Decode(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, common.DetailedError{
-			ErrorCode:   common.ErrorUnparsablePayload,
+		c.JSON(http.StatusBadRequest, err_utils.DetailedError{
+			ErrorCode:   err_utils.ErrorUnparsablePayload,
 			Description: "Request body could not be parsed",
 		})
 	}
 	if payload.Email == "" || payload.Password == "" {
-		c.JSON(http.StatusBadRequest, common.DetailedError{
-			ErrorCode:   common.ErrorPayloadMissingRequiredFields,
+		c.JSON(http.StatusBadRequest, err_utils.DetailedError{
+			ErrorCode:   err_utils.ErrorPayloadMissingRequiredFields,
 			Description: "One or more of the required fields are missing",
 		})
 		return
@@ -72,14 +72,14 @@ func LoginRoute(c *gin.Context) {
 func SignUpRoute(c *gin.Context) {
 	var payload SignUpPayload
 	if err := json.NewDecoder(c.Request.Body).Decode(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, common.DetailedError{
-			ErrorCode:   common.ErrorUnparsablePayload,
+		c.JSON(http.StatusBadRequest, err_utils.DetailedError{
+			ErrorCode:   err_utils.ErrorUnparsablePayload,
 			Description: "Request body could not be parsed",
 		})
 	}
 	if payload.Email == "" || payload.Password == "" {
-		c.JSON(http.StatusBadRequest, common.DetailedError{
-			ErrorCode:   common.ErrorPayloadMissingRequiredFields,
+		c.JSON(http.StatusBadRequest, err_utils.DetailedError{
+			ErrorCode:   err_utils.ErrorPayloadMissingRequiredFields,
 			Description: "One or more of the required fields are missing",
 		})
 	}
@@ -91,9 +91,9 @@ func SignUpRoute(c *gin.Context) {
 		Password:  payload.Password,
 	})
 	if err != nil {
-		if err.ErrorCode == common.ErrorDuplicateEntity {
-			c.JSON(http.StatusConflict, common.DetailedError{
-				ErrorCode:   common.ErrorUserExists,
+		if err.ErrorCode == err_utils.ErrorDuplicateEntity {
+			c.JSON(http.StatusConflict, err_utils.DetailedError{
+				ErrorCode:   err_utils.ErrorUserExists,
 				Description: "A matching user already exists",
 			})
 			return

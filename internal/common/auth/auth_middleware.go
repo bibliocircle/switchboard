@@ -15,7 +15,6 @@ type User struct {
 	Lastname  string `mapstructure:"lastName"`
 	Email     string `mapstructure:"email"`
 	ID        string `mapstructure:"id"`
-	Role      string `mapstructure:"role"`
 }
 
 func getUserFromClaims(c *jwt.MapClaims) (*User, error) {

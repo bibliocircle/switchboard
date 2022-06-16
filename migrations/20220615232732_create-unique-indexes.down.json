@@ -1,0 +1,10 @@
+[
+    {
+        "dropIndexes": "endpoints",
+        "index": "unique_key"
+    },
+    {
+        "dropIndexes": "mockservices",
+        "index": "unique_key"
+    }
+]

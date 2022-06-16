@@ -1,4 +1,4 @@
-package endpoint
+package upstream
 
 import (
 	"encoding/json"
@@ -11,8 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateEndpointRoute(c *gin.Context) {
-	var payload Endpoint
+func CreateUpstreamRoute(c *gin.Context) {
+	var payload Upstream
 	decodeErr := json.NewDecoder(c.Request.Body).Decode(&payload)
 	if decodeErr != nil {
 		c.JSON(http.StatusBadRequest, err_utils.NewDetailedError(
@@ -22,9 +22,9 @@ func CreateEndpointRoute(c *gin.Context) {
 		return
 	}
 	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
-	createdEndpoint, createErr := CreateEndpoint(currentUser.ID, &payload)
+	createdUpstream, createErr := CreateUpstream(currentUser.ID, &payload)
 	if createErr == nil {
-		c.JSON(http.StatusCreated, createdEndpoint)
+		c.JSON(http.StatusCreated, createdUpstream)
 		return
 	}
 	wrappedErr := db.GetDbError(createErr)

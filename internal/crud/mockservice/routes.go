@@ -1,4 +1,4 @@
-package endpoint
+package mockservice
 
 import (
 	"encoding/json"
@@ -11,8 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateEndpointRoute(c *gin.Context) {
-	var payload Endpoint
+func CreateMockServiceRoute(c *gin.Context) {
+	var payload MockService
 	decodeErr := json.NewDecoder(c.Request.Body).Decode(&payload)
 	if decodeErr != nil {
 		c.JSON(http.StatusBadRequest, err_utils.NewDetailedError(
@@ -22,15 +22,15 @@ func CreateEndpointRoute(c *gin.Context) {
 		return
 	}
 	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
-	createdEndpoint, createErr := CreateEndpoint(currentUser.ID, &payload)
+	createdMockService, createErr := CreateMockService(currentUser.ID, &payload)
 	if createErr == nil {
-		c.JSON(http.StatusCreated, createdEndpoint)
+		c.JSON(http.StatusCreated, createdMockService)
 		return
 	}
 	wrappedErr := db.GetDbError(createErr)
 
 	if wrappedErr.ErrorCode == err_utils.ErrorDuplicateEntity {
-		c.JSON(http.StatusUnprocessableEntity, "endpoint already exists")
+		c.JSON(http.StatusUnprocessableEntity, "mock service already exists")
 		return
 	}
 

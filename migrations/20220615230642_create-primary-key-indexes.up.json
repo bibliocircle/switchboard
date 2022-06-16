@@ -1,0 +1,46 @@
+[
+    {
+        "createIndexes": "mockservices",
+        "indexes": [
+            {
+                "key": {
+                    "id": 1
+                },
+                "name": "primary_id"
+            }
+        ]
+    },
+    {
+        "createIndexes": "endpoints",
+        "indexes": [
+            {
+                "key": {
+                    "id": 1
+                },
+                "name": "primary_id"
+            }
+        ]
+    },
+    {
+        "createIndexes": "scenarios",
+        "indexes": [
+            {
+                "key": {
+                    "id": 1
+                },
+                "name": "primary_id"
+            }
+        ]
+    },
+    {
+        "createIndexes": "upstreams",
+        "indexes": [
+            {
+                "key": {
+                    "id": 1
+                },
+                "name": "primary_id"
+            }
+        ]
+    }
+]

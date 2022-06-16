@@ -1,0 +1,28 @@
+[
+    {
+        "createIndexes": "endpoints",
+        "indexes": [
+            {
+                "key": {
+                    "mockServiceId": 1,
+                    "path": 1,
+                    "method": 1
+                },
+                "unique": true,
+                "name": "unique_key"
+            }
+        ]
+    },
+    {
+        "createIndexes": "mockservices",
+        "indexes": [
+            {
+                "key": {
+                    "key": 1
+                },
+                "unique": true,
+                "name": "unique_key"
+            }
+        ]
+    }
+]

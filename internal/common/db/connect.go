@@ -24,8 +24,12 @@ func Disconnect(ctx context.Context, client *mongo.Client) {
 	}
 }
 
+func GetConnectionString() string {
+	return os.Getenv("DB_CONNECTION_STRING")
+}
+
 func Connect(ctx context.Context) error {
-	connectionString := os.Getenv("DB_CONNECTION_STRING")
+	connectionString := GetConnectionString()
 	var err error
 	Client, err = mongo.Connect(ctx, options.Client().ApplyURI(connectionString))
 	if err != nil {
