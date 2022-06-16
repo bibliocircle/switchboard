@@ -15,12 +15,12 @@ type Upstream struct {
 	MockServiceId string    `json:"mockServiceId" bson:"mockServiceId,omitempty"`
 	Name          string    `json:"name" bson:"name,omitempty"`
 	URL           string    `json:"url" bson:"url,omitempty"`
-	CreatedBy     string    `json:"createdBy" bson:"createdAt,omitempty"`
+	CreatedBy     string    `json:"createdBy" bson:"createdBy,omitempty"`
 	CreatedAt     time.Time `json:"createdAt" bson:"createdAt,omitempty"`
 	UpdatedAt     time.Time `json:"updatedAt" bson:"updatedAt,omitempty"`
 }
 
-func CreateUpstream(userId string, upstream *Upstream) (*Upstream, *err_utils.DetailedError) {
+func CreateUpstream(userId string, upstream *CreateUpstreamRequestBody) (*Upstream, *err_utils.DetailedError) {
 	eId, _ := uuid.NewRandom()
 	upstreamId := eId.String()
 	currentTime := time.Now()

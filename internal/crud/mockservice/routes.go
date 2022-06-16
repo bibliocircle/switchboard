@@ -1,23 +1,27 @@
 package mockservice
 
 import (
-	"encoding/json"
 	"net/http"
 	"switchboard/internal/common/auth"
 	"switchboard/internal/common/constants"
-	"switchboard/internal/common/db"
 	"switchboard/internal/common/err_utils"
 
 	"github.com/gin-gonic/gin"
 )
 
+type CreateMockServiceRequestBody struct {
+	Name   string                  `json:"name" binding:"required"`
+	Key    string                  `json:"key" binding:"required"`
+	Type   string                  `json:"type" binding:"required"`
+	Config GlobalMockServiceConfig `json:"config" binding:"required"`
+}
+
 func CreateMockServiceRoute(c *gin.Context) {
-	var payload MockService
-	decodeErr := json.NewDecoder(c.Request.Body).Decode(&payload)
-	if decodeErr != nil {
+	var payload CreateMockServiceRequestBody
+	if bindErr := c.ShouldBindJSON(&payload); bindErr != nil {
 		c.JSON(http.StatusBadRequest, err_utils.NewDetailedError(
 			err_utils.ErrorUnparsablePayload,
-			"could not parse request payload",
+			bindErr.Error(),
 		))
 		return
 	}
@@ -27,10 +31,9 @@ func CreateMockServiceRoute(c *gin.Context) {
 		c.JSON(http.StatusCreated, createdMockService)
 		return
 	}
-	wrappedErr := db.GetDbError(createErr)
 
-	if wrappedErr.ErrorCode == err_utils.ErrorDuplicateEntity {
-		c.JSON(http.StatusUnprocessableEntity, "mock service already exists")
+	if createErr.ErrorCode == err_utils.ErrorDuplicateEntity {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "mock service already exists"})
 		return
 	}
 

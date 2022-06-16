@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"context"
+	"strings"
 	"switchboard/internal/common/db"
 	"switchboard/internal/common/err_utils"
 	"time"
@@ -15,22 +16,24 @@ type Endpoint struct {
 	MockServiceId string    `json:"mockServiceId" bson:"mockServiceId,omitempty"`
 	Path          string    `json:"path" bson:"path,omitempty"`
 	Method        string    `json:"method" bson:"method,omitempty"`
+	Description   string    `json:"description" bson:"description,omitempty"`
 	ResponseDelay int64     `json:"responseDelay" bson:"responseDelay,omitempty"`
 	CreatedBy     string    `json:"createdBy" bson:"createdBy,omitempty"`
 	CreatedAt     time.Time `json:"createdAt" bson:"createdAt,omitempty"`
 	UpdatedAt     time.Time `json:"updatedAt" bson:"updatedAt,omitempty"`
 }
 
-func CreateEndpoint(userId string, endpoint *Endpoint) (*Endpoint, *err_utils.DetailedError) {
+func CreateEndpoint(userId string, ep *CreateEndpointRequestBody) (*Endpoint, *err_utils.DetailedError) {
 	eId, _ := uuid.NewRandom()
 	endpointId := eId.String()
 	currentTime := time.Now()
 	newEndpoint := &Endpoint{
 		ID:            endpointId,
-		MockServiceId: endpoint.MockServiceId,
-		Path:          endpoint.Path,
-		Method:        endpoint.Method,
-		ResponseDelay: endpoint.ResponseDelay,
+		MockServiceId: ep.MockServiceId,
+		Path:          ep.Path,
+		Method:        strings.ToUpper(ep.Method),
+		Description:   ep.Description,
+		ResponseDelay: ep.ResponseDelay,
 		CreatedBy:     userId,
 		CreatedAt:     currentTime,
 		UpdatedAt:     currentTime,

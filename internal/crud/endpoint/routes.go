@@ -1,23 +1,28 @@
 package endpoint
 
 import (
-	"encoding/json"
 	"net/http"
 	"switchboard/internal/common/auth"
 	"switchboard/internal/common/constants"
-	"switchboard/internal/common/db"
 	"switchboard/internal/common/err_utils"
 
 	"github.com/gin-gonic/gin"
 )
 
+type CreateEndpointRequestBody struct {
+	MockServiceId string `json:"mockServiceId" binding:"required"`
+	Path          string `json:"path" binding:"required"`
+	Method        string `json:"method" binding:"required"`
+	Description   string `json:"description" binding:"required"`
+	ResponseDelay int64  `json:"responseDelay"`
+}
+
 func CreateEndpointRoute(c *gin.Context) {
-	var payload Endpoint
-	decodeErr := json.NewDecoder(c.Request.Body).Decode(&payload)
-	if decodeErr != nil {
+	var payload CreateEndpointRequestBody
+	if bindErr := c.ShouldBindJSON(&payload); bindErr != nil {
 		c.JSON(http.StatusBadRequest, err_utils.NewDetailedError(
 			err_utils.ErrorUnparsablePayload,
-			"could not parse request payload",
+			bindErr.Error(),
 		))
 		return
 	}
@@ -27,10 +32,9 @@ func CreateEndpointRoute(c *gin.Context) {
 		c.JSON(http.StatusCreated, createdEndpoint)
 		return
 	}
-	wrappedErr := db.GetDbError(createErr)
 
-	if wrappedErr.ErrorCode == err_utils.ErrorDuplicateEntity {
-		c.JSON(http.StatusUnprocessableEntity, "endpoint already exists")
+	if createErr.ErrorCode == err_utils.ErrorDuplicateEntity {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "endpoint already exists"})
 		return
 	}
 

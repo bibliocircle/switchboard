@@ -25,16 +25,17 @@ type MockService struct {
 	UpdatedAt time.Time               `json:"updatedAt" bson:"updatedAt,omitempty"`
 }
 
-func CreateMockService(userId string, endpoint *MockService) (*MockService, *err_utils.DetailedError) {
+func CreateMockService(userId string, ms *CreateMockServiceRequestBody) (*MockService, *err_utils.DetailedError) {
 	eId, _ := uuid.NewRandom()
 	mockSvcId := eId.String()
 	currentTime := time.Now()
 	newMockService := &MockService{
 		ID:   mockSvcId,
-		Name: endpoint.Name,
-		Type: endpoint.Type,
+		Name: ms.Name,
+		Key:  ms.Key,
+		Type: ms.Type,
 		Config: GlobalMockServiceConfig{
-			InjectHeaders: endpoint.Config.InjectHeaders,
+			InjectHeaders: ms.Config.InjectHeaders,
 		},
 		CreatedBy: userId,
 		CreatedAt: currentTime,

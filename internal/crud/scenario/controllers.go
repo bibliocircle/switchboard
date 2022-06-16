@@ -11,7 +11,6 @@ import (
 )
 
 type ScenarioConfig struct {
-	ID                   string            `json:"id" bson:"id,omitempty"`
 	StatusCode           int32             `json:"statusCode" bson:"statusCode,omitempty"`
 	ResponseBodyTemplate string            `json:"responseBodyTemplate" bson:"responseBodyTemplate,omitempty"`
 	ResponseHeaders      map[string]string `json:"responseHeaders" bson:"responseHeaders,omitempty"`
@@ -27,15 +26,15 @@ type Scenario struct {
 	UpdatedAt  time.Time      `json:"updatedAt" bson:"updatedAt,omitempty"`
 }
 
-func CreateScenario(userId string, scenario *Scenario) (*Scenario, *err_utils.DetailedError) {
+func CreateScenario(userId string, sc *CreateScenarioRequestBody) (*Scenario, *err_utils.DetailedError) {
 	eId, _ := uuid.NewRandom()
 	scenarioId := eId.String()
 	currentTime := time.Now()
 	newScenario := &Scenario{
 		ID:         scenarioId,
-		EndpointId: scenario.EndpointId,
-		Type:       scenario.Type,
-		Config:     scenario.Config,
+		EndpointId: sc.EndpointId,
+		Type:       sc.Type,
+		Config:     ScenarioConfig(sc.Config),
 		CreatedBy:  userId,
 		CreatedAt:  currentTime,
 		UpdatedAt:  currentTime,
