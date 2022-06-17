@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Endpoint struct {
@@ -54,4 +55,43 @@ func CreateEndpoint(userId string, ep *CreateEndpointRequestBody) (*Endpoint, *e
 		return nil, err_utils.WrapAsDetailedError(findErr)
 	}
 	return &createdEndpoint, nil
+}
+
+func GetEndpoints(mockServiceID string) ([]Endpoint, *err_utils.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	endpointsCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
+	findOpts := &options.FindOptions{
+		Sort: &map[string]int64{
+			"createdAt": -1,
+		},
+	}
+	dbQuery := bson.D{
+		{Key: "mockServiceId", Value: mockServiceID},
+	}
+
+	cursor, errFind := endpointsCol.Find(ctx, dbQuery, findOpts)
+	if errFind != nil {
+		return []Endpoint{}, err_utils.WrapAsDetailedError(errFind)
+	}
+	var result []Endpoint
+	err := cursor.All(ctx, &result)
+	if err != nil {
+		return nil, err_utils.WrapAsDetailedError(err)
+	}
+	return result, nil
+}
+
+func DeleteEndpoint(userID, endpointID string) (bool, *err_utils.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	endpointsCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
+	result, errDel := endpointsCol.DeleteOne(ctx, bson.D{
+		{Key: "id", Value: endpointID},
+		{Key: "createdBy", Value: userID},
+	})
+	if errDel != nil {
+		return false, err_utils.WrapAsDetailedError(errDel)
+	}
+	return result.DeletedCount > 0, nil
 }

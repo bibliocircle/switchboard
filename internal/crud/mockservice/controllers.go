@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type GlobalMockServiceConfig struct {
@@ -57,4 +58,40 @@ func CreateMockService(userId string, ms *CreateMockServiceRequestBody) (*MockSe
 		return nil, err_utils.WrapAsDetailedError(findErr)
 	}
 	return &createdMockService, nil
+}
+
+func GetMockServices() ([]MockService, *err_utils.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	mockServicesCol := db.Database.Collection(db.MOCKSERVICES_COLLECTION)
+	findOpts := &options.FindOptions{
+		Sort: &map[string]int64{
+			"createdAt": -1,
+		},
+	}
+
+	cursor, errFind := mockServicesCol.Find(ctx, bson.D{}, findOpts)
+	if errFind != nil {
+		return []MockService{}, err_utils.WrapAsDetailedError(errFind)
+	}
+	var result []MockService
+	err := cursor.All(ctx, &result)
+	if err != nil {
+		return nil, err_utils.WrapAsDetailedError(err)
+	}
+	return result, nil
+}
+
+func DeleteMockService(userID, mockServiceID string) (bool, *err_utils.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	mockServicesCol := db.Database.Collection(db.MOCKSERVICES_COLLECTION)
+	result, errDel := mockServicesCol.DeleteOne(ctx, bson.D{
+		{Key: "id", Value: mockServiceID},
+		{Key: "createdBy", Value: userID},
+	})
+	if errDel != nil {
+		return false, err_utils.WrapAsDetailedError(errDel)
+	}
+	return result.DeletedCount > 0, nil
 }

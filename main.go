@@ -41,9 +41,18 @@ func setupUnauthenticatedRoutes(r *gin.Engine) {
 
 func setupAuthenticatedRoutes(r *gin.Engine) {
 	r.POST("/endpoint", endpoint.CreateEndpointRoute)
+	r.DELETE("/endpoint/:endpointId", endpoint.DeleteEndpointRoute)
+
 	r.POST("/scenario", scenario.CreateScenarioRoute)
+
 	r.POST("/upstream", upstream.CreateUpstreamRoute)
+	r.DELETE("/upstream/:upstreamId", upstream.DeleteUpstreamRoute)
+
 	r.POST("/mockservice", mockservice.CreateMockServiceRoute)
+	r.DELETE("/mockservice/:mockServiceId", mockservice.DeleteMockServiceRoute)
+	r.GET("/mockservices", mockservice.GetMockServicesRoute)
+	r.GET("/mockservice/:mockServiceId/upstreams", upstream.GetUpstreamsByMockServiceIdRoute)
+	r.GET("/mockservice/:mockServiceId/endpoints", endpoint.GetEndpointsByMockServiceIdRoute)
 
 	r.GET("/protected", func(c *gin.Context) {
 		user := c.Value("user").(*auth.User)
