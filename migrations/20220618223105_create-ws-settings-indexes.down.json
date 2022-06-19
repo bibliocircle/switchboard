@@ -1,0 +1,6 @@
+[
+    {
+        "dropIndexes": "workspace_settings",
+        "index": "primary_unique_key"
+    }
+]

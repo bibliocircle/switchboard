@@ -3,7 +3,7 @@ package auth
 import (
 	"os"
 	"strconv"
-	u "switchboard/internal/crud/user"
+	u "switchboard/internal/management_api/user"
 	"time"
 
 	"github.com/golang-jwt/jwt"

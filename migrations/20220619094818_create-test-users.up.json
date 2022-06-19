@@ -1,0 +1,25 @@
+[
+    {
+        "insert": "users",
+        "documents": [
+            {
+                "id" : "3cb05fc7-c13b-470a-adee-4e8dff659b70",
+                "firstName" : "John",
+                "lastName" : "Doe",
+                "email" : "johndoe@example.com",
+                "password" : "$argon2id$v=19$m=65536,t=3,p=2$400qUWV+eJX6NbnBEAmRgA$WjG7z8iNGcyiYsEp8Liq4UIzZ5xpbEl93YHPmTzdPqM",
+                "createdAt" : "2022-06-19T10:15:01.287Z",
+                "updatedAt" : "2022-06-19T10:15:01.287Z"
+            },
+            {
+                "id" : "f4afa0e1-d403-4a4b-96f1-19e56470374d",
+                "firstName" : "Jane",
+                "lastName" : "Doe",
+                "email" : "janedoe@example.com",
+                "password" : "$argon2id$v=19$m=65536,t=3,p=2$400qUWV+eJX6NbnBEAmRgA$WjG7z8iNGcyiYsEp8Liq4UIzZ5xpbEl93YHPmTzdPqM",
+                "createdAt" : "2022-06-19T10:15:01.287Z",
+                "updatedAt" : "2022-06-19T10:15:01.287Z"
+            }
+        ]
+    }
+]

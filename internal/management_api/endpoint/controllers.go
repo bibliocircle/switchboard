@@ -1,7 +1,8 @@
-package upstream
+package endpoint
 
 import (
 	"context"
+	"strings"
 	"switchboard/internal/common/db"
 	"switchboard/internal/common/err_utils"
 	"time"
@@ -11,51 +12,55 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Upstream struct {
+type Endpoint struct {
 	ID            string    `json:"id" bson:"id,omitempty"`
 	MockServiceId string    `json:"mockServiceId" bson:"mockServiceId,omitempty"`
-	Name          string    `json:"name" bson:"name,omitempty"`
-	URL           string    `json:"url" bson:"url,omitempty"`
+	Path          string    `json:"path" bson:"path,omitempty"`
+	Method        string    `json:"method" bson:"method,omitempty"`
+	Description   string    `json:"description" bson:"description,omitempty"`
+	ResponseDelay int64     `json:"responseDelay" bson:"responseDelay,omitempty"`
 	CreatedBy     string    `json:"createdBy" bson:"createdBy,omitempty"`
 	CreatedAt     time.Time `json:"createdAt" bson:"createdAt,omitempty"`
 	UpdatedAt     time.Time `json:"updatedAt" bson:"updatedAt,omitempty"`
 }
 
-func CreateUpstream(userID string, upstream *CreateUpstreamRequestBody) (*Upstream, *err_utils.DetailedError) {
+func CreateEndpoint(userId string, ep *CreateEndpointRequestBody) (*Endpoint, *err_utils.DetailedError) {
 	eId, _ := uuid.NewRandom()
-	upstreamId := eId.String()
+	endpointId := eId.String()
 	currentTime := time.Now()
-	newUpstream := &Upstream{
-		ID:            upstreamId,
-		MockServiceId: upstream.MockServiceId,
-		Name:          upstream.Name,
-		URL:           upstream.URL,
-		CreatedBy:     userID,
+	newEndpoint := &Endpoint{
+		ID:            endpointId,
+		MockServiceId: ep.MockServiceId,
+		Path:          ep.Path,
+		Method:        strings.ToUpper(ep.Method),
+		Description:   ep.Description,
+		ResponseDelay: ep.ResponseDelay,
+		CreatedBy:     userId,
 		CreatedAt:     currentTime,
 		UpdatedAt:     currentTime,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	upstreamsCollection := db.Database.Collection(db.UPSTREAMS_COLLECTION)
-	_, insertErr := upstreamsCollection.InsertOne(ctx, newUpstream)
+	endpointsCollection := db.Database.Collection(db.ENDPOINT_COLLECTION)
+	_, insertErr := endpointsCollection.InsertOne(ctx, newEndpoint)
 	if insertErr != nil {
 		return nil, db.GetDbError(insertErr)
 	}
-	var createdUpstream Upstream
-	findErr := upstreamsCollection.FindOne(ctx, bson.D{{
+	var createdEndpoint Endpoint
+	findErr := endpointsCollection.FindOne(ctx, bson.D{{
 		Key:   "id",
-		Value: upstreamId,
-	}}).Decode(&createdUpstream)
+		Value: endpointId,
+	}}).Decode(&createdEndpoint)
 	if findErr != nil {
 		return nil, err_utils.WrapAsDetailedError(findErr)
 	}
-	return &createdUpstream, nil
+	return &createdEndpoint, nil
 }
 
-func GetUpstreams(mockServiceID string) ([]Upstream, *err_utils.DetailedError) {
+func GetEndpoints(mockServiceID string) ([]Endpoint, *err_utils.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	upstreamsCol := db.Database.Collection(db.UPSTREAMS_COLLECTION)
+	endpointsCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": -1,
@@ -65,11 +70,11 @@ func GetUpstreams(mockServiceID string) ([]Upstream, *err_utils.DetailedError) {
 		{Key: "mockServiceId", Value: mockServiceID},
 	}
 
-	cursor, errFind := upstreamsCol.Find(ctx, dbQuery, findOpts)
+	cursor, errFind := endpointsCol.Find(ctx, dbQuery, findOpts)
 	if errFind != nil {
-		return []Upstream{}, err_utils.WrapAsDetailedError(errFind)
+		return []Endpoint{}, err_utils.WrapAsDetailedError(errFind)
 	}
-	var result []Upstream
+	result := make([]Endpoint, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
 		return nil, err_utils.WrapAsDetailedError(err)
@@ -77,12 +82,12 @@ func GetUpstreams(mockServiceID string) ([]Upstream, *err_utils.DetailedError) {
 	return result, nil
 }
 
-func DeleteUpstream(userID, upstreamID string) (bool, *err_utils.DetailedError) {
+func DeleteEndpoint(userID, endpointID string) (bool, *err_utils.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	upstreamsCol := db.Database.Collection(db.UPSTREAMS_COLLECTION)
-	result, errDel := upstreamsCol.DeleteOne(ctx, bson.D{
-		{Key: "id", Value: upstreamID},
+	endpointsCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
+	result, errDel := endpointsCol.DeleteOne(ctx, bson.D{
+		{Key: "id", Value: endpointID},
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {

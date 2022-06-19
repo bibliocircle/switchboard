@@ -1,3 +1,8 @@
 package constants
 
-const REQ_USER_KEY = "user"
+const (
+	REQ_USER_KEY          = "user"
+	NETWORK_SCENARIO_TYPE = "NETWORK"
+	PROXY_SCENARIO_TYPE   = "PROXY"
+	HTTP_SCENARIO_TYPE    = "HTTP_RESPONSE"
+)

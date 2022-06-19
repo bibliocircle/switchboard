@@ -1,0 +1,10 @@
+[
+    {
+        "dropIndexes": "workspaces",
+        "index": "primary_id"
+    },
+    {
+        "dropIndexes": "workspaces",
+        "index": "unique_key"
+    }
+]

@@ -1,0 +1,20 @@
+[
+    {
+        "createIndexes": "workspaces",
+        "indexes": [
+            {
+                "key": {
+                    "id": 1
+                },
+                "name": "primary_id"
+            },
+            {
+                "key": {
+                    "name": 1
+                },
+                "unique": true,
+                "name": "unique_key"
+            }
+        ]
+    }
+]

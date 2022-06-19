@@ -13,7 +13,7 @@ import (
 
 type CreateEndpointRequestBody struct {
 	MockServiceId string `json:"mockServiceId" binding:"required"`
-	Path          string `json:"path" binding:"required"`
+	Path          string `json:"path" binding:"required,absolutePath"`
 	Method        string `json:"method" binding:"required"`
 	Description   string `json:"description" binding:"required"`
 	ResponseDelay int64  `json:"responseDelay"`

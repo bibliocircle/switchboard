@@ -1,15 +1,15 @@
 [
     {
-        "createIndexes": "endpoints",
+        "createIndexes": "workspace_settings",
         "indexes": [
             {
                 "key": {
+                    "workspaceId": 1,
                     "mockServiceId": 1,
-                    "path": 1,
-                    "method": 1
+                    "endpointId": 1
                 },
                 "unique": true,
-                "name": "unique_key"
+                "name": "primary_unique_key"
             }
         ]
     }

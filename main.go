@@ -5,18 +5,22 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"switchboard/internal/common/auth"
 	"switchboard/internal/common/db"
 	"switchboard/internal/common/middleware"
 	"switchboard/internal/common/randomdata"
-	"switchboard/internal/crud/endpoint"
-	"switchboard/internal/crud/mockservice"
-	"switchboard/internal/crud/scenario"
-	"switchboard/internal/crud/upstream"
+	"switchboard/internal/common/validation"
+	"switchboard/internal/management_api/endpoint"
+	"switchboard/internal/management_api/mockservice"
+	"switchboard/internal/management_api/scenario"
+	"switchboard/internal/management_api/upstream"
+	"switchboard/internal/management_api/workspace"
+	"switchboard/internal/management_api/workspace_settings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	env "github.com/joho/godotenv"
 )
 
@@ -54,10 +58,14 @@ func setupAuthenticatedRoutes(r *gin.Engine) {
 	r.GET("/mockservice/:mockServiceId/upstreams", upstream.GetUpstreamsByMockServiceIdRoute)
 	r.GET("/mockservice/:mockServiceId/endpoints", endpoint.GetEndpointsByMockServiceIdRoute)
 
-	r.GET("/protected", func(c *gin.Context) {
-		user := c.Value("user").(*auth.User)
-		c.JSON(http.StatusOK, user)
-	})
+	r.POST("/workspace", workspace.CreateWorkspaceRoute)
+	r.DELETE("/workspace/:workspaceId", workspace.DeleteWorkspaceRoute)
+	r.GET("/workspaces", workspace.GetWorkspacesRoute)
+	r.GET("/user/workspaces", workspace.GetUserWorkspacesRoute)
+	r.GET("/workspace/:workspaceId/settings", workspace_settings.GetWorkspaceSettingsRoute)
+	r.PUT("/workspace/:workspaceId/mockservice/:mockServiceId/endpoint/:endpointId/settings", workspace_settings.UpdateWsMockServiceConfigRoute)
+	r.PUT("/workspace/:workspaceId/mockservice/:mockServiceId/endpoint/:endpointId/scenario/:scenarioId/activate", workspace_settings.ActivateMockServiceScenarioRoute)
+	r.POST("/workspace/:workspaceId/mockservice/:mockServiceId/add", workspace_settings.AddMockServiceToWorkspaceRoute)
 
 	// temporary endpoints to test random data generator
 	r.POST("/randomjson", func(c *gin.Context) {
@@ -87,6 +95,9 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		validation.InitialiseValidator(v)
+	}
 
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())

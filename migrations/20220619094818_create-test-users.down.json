@@ -1,0 +1,14 @@
+[
+    {
+        "delete": "users",
+        "deletes": [
+            {
+                "q": {
+                    "id": {
+                        "$in": ["3cb05fc7-c13b-470a-adee-4e8dff659b70", "f4afa0e1-d403-4a4b-96f1-19e56470374d"]
+                    }
+                }
+            }
+        ]
+    }
+]

@@ -6,7 +6,6 @@ import (
 	"switchboard/internal/common/err_utils"
 	"time"
 
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -18,7 +17,6 @@ type GlobalMockServiceConfig struct {
 type MockService struct {
 	ID        string                  `json:"id" bson:"id,omitempty"`
 	Name      string                  `json:"name" bson:"name,omitempty"`
-	Key       string                  `json:"key" bson:"key,omitempty"`
 	Type      string                  `json:"type" bson:"type,omitempty"`
 	Config    GlobalMockServiceConfig `json:"config" bson:"config,omitempty"`
 	CreatedBy string                  `json:"createdBy" bson:"createdBy,omitempty"`
@@ -27,13 +25,10 @@ type MockService struct {
 }
 
 func CreateMockService(userId string, ms *CreateMockServiceRequestBody) (*MockService, *err_utils.DetailedError) {
-	eId, _ := uuid.NewRandom()
-	mockSvcId := eId.String()
 	currentTime := time.Now()
 	newMockService := &MockService{
-		ID:   mockSvcId,
+		ID:   ms.ID,
 		Name: ms.Name,
-		Key:  ms.Key,
 		Type: ms.Type,
 		Config: GlobalMockServiceConfig{
 			InjectHeaders: ms.Config.InjectHeaders,
@@ -52,7 +47,7 @@ func CreateMockService(userId string, ms *CreateMockServiceRequestBody) (*MockSe
 	var createdMockService MockService
 	findErr := mockServicesCollection.FindOne(ctx, bson.D{{
 		Key:   "id",
-		Value: mockSvcId,
+		Value: ms.ID,
 	}}).Decode(&createdMockService)
 	if findErr != nil {
 		return nil, err_utils.WrapAsDetailedError(findErr)
@@ -74,7 +69,7 @@ func GetMockServices() ([]MockService, *err_utils.DetailedError) {
 	if errFind != nil {
 		return []MockService{}, err_utils.WrapAsDetailedError(errFind)
 	}
-	var result []MockService
+	result := make([]MockService, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
 		return nil, err_utils.WrapAsDetailedError(err)

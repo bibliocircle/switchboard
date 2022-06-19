@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 	"switchboard/internal/common/err_utils"
-	"switchboard/internal/crud/user"
+	"switchboard/internal/management_api/user"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
