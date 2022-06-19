@@ -3,7 +3,6 @@ package management_api
 import (
 	"fmt"
 	"net/http"
-	"switchboard/internal/common/auth"
 	"switchboard/internal/common/constants"
 	"switchboard/internal/common/err_utils"
 	"switchboard/internal/db"
@@ -22,7 +21,7 @@ func CreateUpstreamRoute(c *gin.Context) {
 		))
 		return
 	}
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	createdUpstream, createErr := db.CreateUpstream(currentUser.ID, &payload)
 	if createErr == nil {
 		c.JSON(http.StatusCreated, createdUpstream)
@@ -49,7 +48,7 @@ func GetUpstreamsByMockServiceIdRoute(c *gin.Context) {
 
 func DeleteUpstreamRoute(c *gin.Context) {
 	upstreamID := c.Param("upstreamId")
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	ok, err := db.DeleteUpstream(currentUser.ID, upstreamID)
 	if err != nil {
 		log.Errorln(fmt.Sprintf("could not delete upstream %s. [error code: %s] [description: %s]", upstreamID, err.ErrorCode, err.Description))

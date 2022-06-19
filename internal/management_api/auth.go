@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"switchboard/internal/common/auth"
 	"switchboard/internal/common/err_utils"
+	"switchboard/internal/common/security"
 	"switchboard/internal/db"
 	"switchboard/internal/models"
 
@@ -54,7 +54,7 @@ func LoginRoute(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	token, tokenError := auth.CreateSignedAuthToken(*userEntity)
+	token, tokenError := security.CreateSignedAuthToken(*userEntity)
 	if tokenError != nil {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 		return

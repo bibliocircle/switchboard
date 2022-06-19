@@ -3,7 +3,6 @@ package management_api
 import (
 	"fmt"
 	"net/http"
-	"switchboard/internal/common/auth"
 	"switchboard/internal/common/constants"
 	"switchboard/internal/common/err_utils"
 	"switchboard/internal/db"
@@ -22,7 +21,7 @@ func CreateMockServiceRoute(c *gin.Context) {
 		))
 		return
 	}
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	createdMockService, createErr := db.CreateMockService(currentUser.ID, &payload)
 	if createErr == nil {
 		c.JSON(http.StatusCreated, createdMockService)
@@ -49,7 +48,7 @@ func GetMockServicesRoute(c *gin.Context) {
 
 func DeleteMockServiceRoute(c *gin.Context) {
 	mockServiceID := c.Param("mockServiceId")
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	ok, err := db.DeleteMockService(currentUser.ID, mockServiceID)
 	if err != nil {
 		log.Errorln(fmt.Sprintf("could not delete mock service %s. [error code: %s] [description: %s]", mockServiceID, err.ErrorCode, err.Description))

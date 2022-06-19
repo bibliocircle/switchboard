@@ -3,7 +3,6 @@ package management_api
 import (
 	"fmt"
 	"net/http"
-	"switchboard/internal/common/auth"
 	"switchboard/internal/common/constants"
 	"switchboard/internal/common/err_utils"
 	"switchboard/internal/db"
@@ -14,7 +13,7 @@ import (
 )
 
 func AddMockServiceToWorkspaceRoute(c *gin.Context) {
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	workspaceId := c.Param("workspaceId")
 	mockServiceId := c.Param("mockServiceId")
 
@@ -46,7 +45,7 @@ func AddMockServiceToWorkspaceRoute(c *gin.Context) {
 }
 
 func ActivateMockServiceScenarioRoute(c *gin.Context) {
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	workspaceId := c.Param("workspaceId")
 	mockServiceId := c.Param("mockServiceId")
 	endpointId := c.Param("endpointId")
@@ -88,7 +87,7 @@ func UpdateWsMockServiceConfigRoute(c *gin.Context) {
 		))
 		return
 	}
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	workspaceId := c.Param("workspaceId")
 	mockServiceId := c.Param("mockServiceId")
 	endpointId := c.Param("endpointId")

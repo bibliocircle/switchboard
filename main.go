@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"switchboard/internal/common/auth"
 	"switchboard/internal/common/middleware"
 	"switchboard/internal/common/randomdata"
 	"switchboard/internal/common/validation"
@@ -100,8 +99,8 @@ func main() {
 
 	setupUnauthenticatedRoutes(r)
 
-	r.Use(auth.ParseAuthToken())
-	r.Use(auth.RequireAuthentication())
+	r.Use(middleware.ParseAuthToken())
+	r.Use(middleware.RequireAuthentication())
 
 	setupAuthenticatedRoutes(r)
 

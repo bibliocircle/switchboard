@@ -3,7 +3,6 @@ package management_api
 import (
 	"fmt"
 	"net/http"
-	"switchboard/internal/common/auth"
 	"switchboard/internal/common/constants"
 	"switchboard/internal/common/err_utils"
 	"switchboard/internal/db"
@@ -22,7 +21,7 @@ func CreateEndpointRoute(c *gin.Context) {
 		))
 		return
 	}
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	createdEndpoint, createErr := db.CreateEndpoint(currentUser.ID, &payload)
 	if createErr == nil {
 		c.JSON(http.StatusCreated, createdEndpoint)
@@ -49,7 +48,7 @@ func GetEndpointsByMockServiceIdRoute(c *gin.Context) {
 
 func DeleteEndpointRoute(c *gin.Context) {
 	endpointID := c.Param("endpointId")
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	ok, err := db.DeleteEndpoint(currentUser.ID, endpointID)
 	if err != nil {
 		log.Errorln(fmt.Sprintf("could not delete endpoint %s. [error code: %s] [description: %s]", endpointID, err.ErrorCode, err.Description))

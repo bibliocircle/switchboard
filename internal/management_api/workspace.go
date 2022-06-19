@@ -3,7 +3,6 @@ package management_api
 import (
 	"fmt"
 	"net/http"
-	"switchboard/internal/common/auth"
 	"switchboard/internal/common/constants"
 	"switchboard/internal/common/err_utils"
 	"switchboard/internal/db"
@@ -22,7 +21,7 @@ func CreateWorkspaceRoute(c *gin.Context) {
 		))
 		return
 	}
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	createdWs, createErr := db.CreateWorkspace(currentUser.ID, &payload)
 	if createErr == nil {
 		c.JSON(http.StatusCreated, createdWs)
@@ -48,7 +47,7 @@ func GetWorkspacesRoute(c *gin.Context) {
 }
 
 func GetUserWorkspacesRoute(c *gin.Context) {
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	ws, err := db.GetUserWorkspaces(currentUser.ID)
 	if err != nil {
 		log.Errorln(fmt.Sprintf("could not retrieve user workspaces. [error code: %s] [description: %s]", err.ErrorCode, err.Description))
@@ -60,7 +59,7 @@ func GetUserWorkspacesRoute(c *gin.Context) {
 
 func DeleteWorkspaceRoute(c *gin.Context) {
 	workspaceID := c.Param("workspaceId")
-	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
+	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
 	ok, err := db.DeleteWorkspace(currentUser.ID, workspaceID)
 	if err != nil {
 		log.Errorln(fmt.Sprintf("could not delete workspace %s. [error code: %s] [description: %s]", workspaceID, err.ErrorCode, err.Description))
