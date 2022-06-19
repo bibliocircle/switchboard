@@ -2,8 +2,8 @@ package workspace_settings
 
 import (
 	"context"
-	"switchboard/internal/common/db"
 	"switchboard/internal/common/err_utils"
+	"switchboard/internal/db"
 	"switchboard/internal/management_api/endpoint"
 	"switchboard/internal/management_api/scenario"
 	"time"

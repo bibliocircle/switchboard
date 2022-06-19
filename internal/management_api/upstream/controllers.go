@@ -2,8 +2,8 @@ package upstream
 
 import (
 	"context"
-	"switchboard/internal/common/db"
 	"switchboard/internal/common/err_utils"
+	"switchboard/internal/db"
 	"time"
 
 	"github.com/google/uuid"

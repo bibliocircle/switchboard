@@ -3,8 +3,8 @@ package endpoint
 import (
 	"context"
 	"strings"
-	"switchboard/internal/common/db"
 	"switchboard/internal/common/err_utils"
+	"switchboard/internal/db"
 	"time"
 
 	"github.com/google/uuid"

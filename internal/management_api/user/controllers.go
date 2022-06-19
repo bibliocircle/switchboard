@@ -3,9 +3,9 @@ package user
 import (
 	"context"
 	"fmt"
-	"switchboard/internal/common/db"
 	"switchboard/internal/common/err_utils"
 	"switchboard/internal/common/security"
+	"switchboard/internal/db"
 	"time"
 
 	"github.com/google/uuid"

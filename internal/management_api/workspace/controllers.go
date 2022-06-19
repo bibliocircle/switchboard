@@ -2,9 +2,9 @@ package workspace
 
 import (
 	"context"
-	"switchboard/internal/common/db"
 	"switchboard/internal/common/err_utils"
 	"switchboard/internal/common/randomdata"
+	"switchboard/internal/db"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
