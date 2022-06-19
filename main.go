@@ -11,12 +11,7 @@ import (
 	"switchboard/internal/common/randomdata"
 	"switchboard/internal/common/validation"
 	"switchboard/internal/db"
-	"switchboard/internal/management_api/endpoint"
-	"switchboard/internal/management_api/mockservice"
-	"switchboard/internal/management_api/scenario"
-	"switchboard/internal/management_api/upstream"
-	"switchboard/internal/management_api/workspace"
-	"switchboard/internal/management_api/workspace_settings"
+	mapi "switchboard/internal/management_api"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -38,34 +33,34 @@ func setupUnauthenticatedRoutes(r *gin.Engine) {
 		c.Writer.Write([]byte("pong"))
 	})
 
-	r.POST("/auth/login", auth.LoginRoute)
-	r.POST("/auth/signup", auth.SignUpRoute)
-	r.POST("/auth/logout", auth.LogOutRoute)
+	r.POST("/auth/login", mapi.LoginRoute)
+	r.POST("/auth/signup", mapi.SignUpRoute)
+	r.POST("/auth/logout", mapi.LogOutRoute)
 }
 
 func setupAuthenticatedRoutes(r *gin.Engine) {
-	r.POST("/endpoint", endpoint.CreateEndpointRoute)
-	r.DELETE("/endpoint/:endpointId", endpoint.DeleteEndpointRoute)
+	r.POST("/endpoint", mapi.CreateEndpointRoute)
+	r.DELETE("/endpoint/:endpointId", mapi.DeleteEndpointRoute)
 
-	r.POST("/scenario", scenario.CreateScenarioRoute)
+	r.POST("/scenario", mapi.CreateScenarioRoute)
 
-	r.POST("/upstream", upstream.CreateUpstreamRoute)
-	r.DELETE("/upstream/:upstreamId", upstream.DeleteUpstreamRoute)
+	r.POST("/upstream", mapi.CreateUpstreamRoute)
+	r.DELETE("/upstream/:upstreamId", mapi.DeleteUpstreamRoute)
 
-	r.POST("/mockservice", mockservice.CreateMockServiceRoute)
-	r.DELETE("/mockservice/:mockServiceId", mockservice.DeleteMockServiceRoute)
-	r.GET("/mockservices", mockservice.GetMockServicesRoute)
-	r.GET("/mockservice/:mockServiceId/upstreams", upstream.GetUpstreamsByMockServiceIdRoute)
-	r.GET("/mockservice/:mockServiceId/endpoints", endpoint.GetEndpointsByMockServiceIdRoute)
+	r.POST("/mockservice", mapi.CreateMockServiceRoute)
+	r.DELETE("/mockservice/:mockServiceId", mapi.DeleteMockServiceRoute)
+	r.GET("/mockservices", mapi.GetMockServicesRoute)
+	r.GET("/mockservice/:mockServiceId/upstreams", mapi.GetUpstreamsByMockServiceIdRoute)
+	r.GET("/mockservice/:mockServiceId/endpoints", mapi.GetEndpointsByMockServiceIdRoute)
 
-	r.POST("/workspace", workspace.CreateWorkspaceRoute)
-	r.DELETE("/workspace/:workspaceId", workspace.DeleteWorkspaceRoute)
-	r.GET("/workspaces", workspace.GetWorkspacesRoute)
-	r.GET("/user/workspaces", workspace.GetUserWorkspacesRoute)
-	r.GET("/workspace/:workspaceId/settings", workspace_settings.GetWorkspaceSettingsRoute)
-	r.PUT("/workspace/:workspaceId/mockservice/:mockServiceId/endpoint/:endpointId/settings", workspace_settings.UpdateWsMockServiceConfigRoute)
-	r.PUT("/workspace/:workspaceId/mockservice/:mockServiceId/endpoint/:endpointId/scenario/:scenarioId/activate", workspace_settings.ActivateMockServiceScenarioRoute)
-	r.POST("/workspace/:workspaceId/mockservice/:mockServiceId/add", workspace_settings.AddMockServiceToWorkspaceRoute)
+	r.POST("/workspace", mapi.CreateWorkspaceRoute)
+	r.DELETE("/workspace/:workspaceId", mapi.DeleteWorkspaceRoute)
+	r.GET("/workspaces", mapi.GetWorkspacesRoute)
+	r.GET("/user/workspaces", mapi.GetUserWorkspacesRoute)
+	r.GET("/workspace/:workspaceId/settings", mapi.GetWorkspaceSettingsRoute)
+	r.PUT("/workspace/:workspaceId/mockservice/:mockServiceId/endpoint/:endpointId/settings", mapi.UpdateWsMockServiceConfigRoute)
+	r.PUT("/workspace/:workspaceId/mockservice/:mockServiceId/endpoint/:endpointId/scenario/:scenarioId/activate", mapi.ActivateMockServiceScenarioRoute)
+	r.POST("/workspace/:workspaceId/mockservice/:mockServiceId/add", mapi.AddMockServiceToWorkspaceRoute)
 
 	// temporary endpoints to test random data generator
 	r.POST("/randomjson", func(c *gin.Context) {

@@ -1,4 +1,4 @@
-package workspace_settings
+package management_api
 
 import (
 	"fmt"
@@ -6,22 +6,19 @@ import (
 	"switchboard/internal/common/auth"
 	"switchboard/internal/common/constants"
 	"switchboard/internal/common/err_utils"
-	"switchboard/internal/management_api/workspace"
+	"switchboard/internal/db"
+	"switchboard/internal/models"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
-
-type UpdateMockServiceConfigRequestBody struct {
-	ResponseDelay uint16 `json:"responseDelay" binding:"required"`
-}
 
 func AddMockServiceToWorkspaceRoute(c *gin.Context) {
 	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
 	workspaceId := c.Param("workspaceId")
 	mockServiceId := c.Param("mockServiceId")
 
-	isWsOwner, errPerm := workspace.IsWorkspaceOwner(currentUser.ID, workspaceId)
+	isWsOwner, errPerm := db.IsWorkspaceOwner(currentUser.ID, workspaceId)
 	if errPerm != nil {
 		log.Errorln(fmt.Sprintf("could not check workspace ownership. [error code: %s] [description: %s]", errPerm.ErrorCode, errPerm.Description))
 		c.Writer.WriteHeader(http.StatusInternalServerError)
@@ -33,7 +30,7 @@ func AddMockServiceToWorkspaceRoute(c *gin.Context) {
 		return
 	}
 
-	err := AddMockServiceToWorkspace(currentUser.ID, workspaceId, mockServiceId)
+	err := db.AddMockServiceToWorkspace(currentUser.ID, workspaceId, mockServiceId)
 	if err == nil {
 		c.Writer.WriteHeader(http.StatusCreated)
 		return
@@ -55,7 +52,7 @@ func ActivateMockServiceScenarioRoute(c *gin.Context) {
 	endpointId := c.Param("endpointId")
 	scenarioId := c.Param("scenarioId")
 
-	isWsOwner, errPerm := workspace.IsWorkspaceOwner(currentUser.ID, workspaceId)
+	isWsOwner, errPerm := db.IsWorkspaceOwner(currentUser.ID, workspaceId)
 	if errPerm != nil {
 		log.Errorln(fmt.Sprintf("could not check workspace ownership. [error code: %s] [description: %s]", errPerm.ErrorCode, errPerm.Description))
 		c.Writer.WriteHeader(http.StatusInternalServerError)
@@ -67,7 +64,7 @@ func ActivateMockServiceScenarioRoute(c *gin.Context) {
 		return
 	}
 
-	ok, updateErr := ActivateMockServiceScenario(workspaceId, mockServiceId, endpointId, scenarioId)
+	ok, updateErr := db.ActivateMockServiceScenario(workspaceId, mockServiceId, endpointId, scenarioId)
 	if updateErr != nil {
 		log.Errorln(fmt.Sprintf("could not activate scenario in workspace. [error code: %s] [description: %s]", updateErr.ErrorCode, updateErr.Description))
 		c.Writer.WriteHeader(http.StatusInternalServerError)
@@ -83,7 +80,7 @@ func ActivateMockServiceScenarioRoute(c *gin.Context) {
 }
 
 func UpdateWsMockServiceConfigRoute(c *gin.Context) {
-	var payload UpdateMockServiceConfigRequestBody
+	var payload models.UpdateMockServiceConfigRequestBody
 	if bindErr := c.ShouldBindJSON(&payload); bindErr != nil {
 		c.JSON(http.StatusBadRequest, err_utils.NewDetailedError(
 			err_utils.ErrorUnparsablePayload,
@@ -96,7 +93,7 @@ func UpdateWsMockServiceConfigRoute(c *gin.Context) {
 	mockServiceId := c.Param("mockServiceId")
 	endpointId := c.Param("endpointId")
 
-	isWsOwner, errPerm := workspace.IsWorkspaceOwner(currentUser.ID, workspaceId)
+	isWsOwner, errPerm := db.IsWorkspaceOwner(currentUser.ID, workspaceId)
 	if errPerm != nil {
 		log.Errorln(fmt.Sprintf("could not check workspace ownership. [error code: %s] [description: %s]", errPerm.ErrorCode, errPerm.Description))
 		c.Writer.WriteHeader(http.StatusInternalServerError)
@@ -108,7 +105,7 @@ func UpdateWsMockServiceConfigRoute(c *gin.Context) {
 		return
 	}
 
-	updatedWss, updateErr := UpdateWsMockServiceConfig(workspaceId, mockServiceId, endpointId, &payload)
+	updatedWss, updateErr := db.UpdateWsMockServiceConfig(workspaceId, mockServiceId, endpointId, &payload)
 	if updateErr == nil {
 		c.JSON(http.StatusOK, updatedWss)
 		return
@@ -119,7 +116,7 @@ func UpdateWsMockServiceConfigRoute(c *gin.Context) {
 }
 
 func GetWorkspaceSettingsRoute(c *gin.Context) {
-	ws, err := GetWorkspaceSettings(c.Param("workspaceId"))
+	ws, err := db.GetWorkspaceSettings(c.Param("workspaceId"))
 	if err != nil {
 		log.Errorln(fmt.Sprintf("could not retrieve workspace settings. [error code: %s] [description: %s]", err.ErrorCode, err.Description))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.ErrorCode})

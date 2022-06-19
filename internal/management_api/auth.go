@@ -1,12 +1,14 @@
-package auth
+package management_api
 
 import (
 	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
+	"switchboard/internal/common/auth"
 	"switchboard/internal/common/err_utils"
-	"switchboard/internal/management_api/user"
+	"switchboard/internal/db"
+	"switchboard/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -43,7 +45,7 @@ func LoginRoute(c *gin.Context) {
 		})
 		return
 	}
-	userEntity, err := user.GetUserByEmailPassword(payload.Email, payload.Password)
+	userEntity, err := db.GetUserByEmailPassword(payload.Email, payload.Password)
 	if err != nil {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 		return
@@ -52,7 +54,7 @@ func LoginRoute(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	token, tokenError := CreateSignedAuthToken(*userEntity)
+	token, tokenError := auth.CreateSignedAuthToken(*userEntity)
 	if tokenError != nil {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 		return
@@ -84,7 +86,7 @@ func SignUpRoute(c *gin.Context) {
 		})
 	}
 
-	createdUser, err := user.CreateUser(&user.CreateUserRequest{
+	createdUser, err := db.CreateUser(&models.CreateUserRequest{
 		FirstName: payload.FirstName,
 		LastName:  payload.LastName,
 		Email:     payload.Email,
@@ -101,7 +103,7 @@ func SignUpRoute(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	c.JSON(http.StatusOK, user.User{
+	c.JSON(http.StatusOK, models.User{
 		ID:        createdUser.ID,
 		FirstName: createdUser.FirstName,
 		LastName:  createdUser.LastName,

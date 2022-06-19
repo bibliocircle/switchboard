@@ -1,11 +1,11 @@
-package user
+package db
 
 import (
 	"context"
 	"fmt"
 	"switchboard/internal/common/err_utils"
 	"switchboard/internal/common/security"
-	"switchboard/internal/db"
+	"switchboard/internal/models"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func CreateUser(user *CreateUserRequest) (*User, *err_utils.DetailedError) {
+func CreateUser(user *models.CreateUserRequest) (*models.User, *err_utils.DetailedError) {
 	userId, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err_utils.WrapAsDetailedError(err)
@@ -25,7 +25,7 @@ func CreateUser(user *CreateUserRequest) (*User, *err_utils.DetailedError) {
 	}
 
 	currentTime := time.Now()
-	newUser := &User{
+	newUser := &models.User{
 		ID:        userId.String(),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
@@ -36,13 +36,13 @@ func CreateUser(user *CreateUserRequest) (*User, *err_utils.DetailedError) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	userCollection := db.Database.Collection("users")
+	userCollection := Database.Collection("users")
 	_, insertError := userCollection.InsertOne(ctx, newUser)
 	if insertError != nil {
-		return nil, db.GetDbError(insertError)
+		return nil, GetDbError(insertError)
 	}
 
-	var createdUser User
+	var createdUser models.User
 	findError := userCollection.FindOne(ctx, bson.D{{
 		Key: "id", Value: userId.String(),
 	}}).Decode(&createdUser)
@@ -52,9 +52,9 @@ func CreateUser(user *CreateUserRequest) (*User, *err_utils.DetailedError) {
 	return &createdUser, nil
 }
 
-func GetUserByID(userId string) (*User, *err_utils.DetailedError) {
-	var user User
-	userCollection := db.Database.Collection("users")
+func GetUserByID(userId string) (*models.User, *err_utils.DetailedError) {
+	var user models.User
+	userCollection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := userCollection.FindOne(ctx, bson.D{{
@@ -70,9 +70,9 @@ func GetUserByID(userId string) (*User, *err_utils.DetailedError) {
 	return &user, nil
 }
 
-func GetUserByEmailPassword(email string, password string) (*User, *err_utils.DetailedError) {
-	var user User
-	userCollection := db.Database.Collection("users")
+func GetUserByEmailPassword(email string, password string) (*models.User, *err_utils.DetailedError) {
+	var user models.User
+	userCollection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := userCollection.FindOne(ctx, bson.D{{

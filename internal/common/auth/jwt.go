@@ -3,14 +3,14 @@ package auth
 import (
 	"os"
 	"strconv"
-	u "switchboard/internal/management_api/user"
+	"switchboard/internal/models"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	log "github.com/sirupsen/logrus"
 )
 
-func CreateSignedAuthToken(user u.User) (*string, error) {
+func CreateSignedAuthToken(user models.User) (*string, error) {
 	type AuthClaims struct {
 		ID        string `json:"id"`
 		FirstName string `json:"firstName"`

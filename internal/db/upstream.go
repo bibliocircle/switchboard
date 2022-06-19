@@ -1,9 +1,9 @@
-package upstream
+package db
 
 import (
 	"context"
 	"switchboard/internal/common/err_utils"
-	"switchboard/internal/db"
+	"switchboard/internal/models"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,21 +11,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Upstream struct {
-	ID            string    `json:"id" bson:"id,omitempty"`
-	MockServiceId string    `json:"mockServiceId" bson:"mockServiceId,omitempty"`
-	Name          string    `json:"name" bson:"name,omitempty"`
-	URL           string    `json:"url" bson:"url,omitempty"`
-	CreatedBy     string    `json:"createdBy" bson:"createdBy,omitempty"`
-	CreatedAt     time.Time `json:"createdAt" bson:"createdAt,omitempty"`
-	UpdatedAt     time.Time `json:"updatedAt" bson:"updatedAt,omitempty"`
-}
-
-func CreateUpstream(userID string, upstream *CreateUpstreamRequestBody) (*Upstream, *err_utils.DetailedError) {
+func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (*models.Upstream, *err_utils.DetailedError) {
 	eId, _ := uuid.NewRandom()
 	upstreamId := eId.String()
 	currentTime := time.Now()
-	newUpstream := &Upstream{
+	newUpstream := &models.Upstream{
 		ID:            upstreamId,
 		MockServiceId: upstream.MockServiceId,
 		Name:          upstream.Name,
@@ -36,12 +26,12 @@ func CreateUpstream(userID string, upstream *CreateUpstreamRequestBody) (*Upstre
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	upstreamsCollection := db.Database.Collection(db.UPSTREAMS_COLLECTION)
+	upstreamsCollection := Database.Collection(UPSTREAMS_COLLECTION)
 	_, insertErr := upstreamsCollection.InsertOne(ctx, newUpstream)
 	if insertErr != nil {
-		return nil, db.GetDbError(insertErr)
+		return nil, GetDbError(insertErr)
 	}
-	var createdUpstream Upstream
+	var createdUpstream models.Upstream
 	findErr := upstreamsCollection.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: upstreamId,
@@ -52,10 +42,10 @@ func CreateUpstream(userID string, upstream *CreateUpstreamRequestBody) (*Upstre
 	return &createdUpstream, nil
 }
 
-func GetUpstreams(mockServiceID string) ([]Upstream, *err_utils.DetailedError) {
+func GetUpstreams(mockServiceID string) ([]models.Upstream, *err_utils.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	upstreamsCol := db.Database.Collection(db.UPSTREAMS_COLLECTION)
+	upstreamsCol := Database.Collection(UPSTREAMS_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": -1,
@@ -67,9 +57,9 @@ func GetUpstreams(mockServiceID string) ([]Upstream, *err_utils.DetailedError) {
 
 	cursor, errFind := upstreamsCol.Find(ctx, dbQuery, findOpts)
 	if errFind != nil {
-		return []Upstream{}, err_utils.WrapAsDetailedError(errFind)
+		return []models.Upstream{}, err_utils.WrapAsDetailedError(errFind)
 	}
-	result := make([]Upstream, 0)
+	result := make([]models.Upstream, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
 		return nil, err_utils.WrapAsDetailedError(err)
@@ -80,7 +70,7 @@ func GetUpstreams(mockServiceID string) ([]Upstream, *err_utils.DetailedError) {
 func DeleteUpstream(userID, upstreamID string) (bool, *err_utils.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	upstreamsCol := db.Database.Collection(db.UPSTREAMS_COLLECTION)
+	upstreamsCol := Database.Collection(UPSTREAMS_COLLECTION)
 	result, errDel := upstreamsCol.DeleteOne(ctx, bson.D{
 		{Key: "id", Value: upstreamID},
 		{Key: "createdBy", Value: userID},

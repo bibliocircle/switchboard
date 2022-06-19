@@ -1,10 +1,10 @@
-package endpoint
+package db
 
 import (
 	"context"
 	"strings"
 	"switchboard/internal/common/err_utils"
-	"switchboard/internal/db"
+	"switchboard/internal/models"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,23 +12,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Endpoint struct {
-	ID            string    `json:"id" bson:"id,omitempty"`
-	MockServiceId string    `json:"mockServiceId" bson:"mockServiceId,omitempty"`
-	Path          string    `json:"path" bson:"path,omitempty"`
-	Method        string    `json:"method" bson:"method,omitempty"`
-	Description   string    `json:"description" bson:"description,omitempty"`
-	ResponseDelay int64     `json:"responseDelay" bson:"responseDelay,omitempty"`
-	CreatedBy     string    `json:"createdBy" bson:"createdBy,omitempty"`
-	CreatedAt     time.Time `json:"createdAt" bson:"createdAt,omitempty"`
-	UpdatedAt     time.Time `json:"updatedAt" bson:"updatedAt,omitempty"`
-}
-
-func CreateEndpoint(userId string, ep *CreateEndpointRequestBody) (*Endpoint, *err_utils.DetailedError) {
+func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*models.Endpoint, *err_utils.DetailedError) {
 	eId, _ := uuid.NewRandom()
 	endpointId := eId.String()
 	currentTime := time.Now()
-	newEndpoint := &Endpoint{
+	newEndpoint := &models.Endpoint{
 		ID:            endpointId,
 		MockServiceId: ep.MockServiceId,
 		Path:          ep.Path,
@@ -41,12 +29,12 @@ func CreateEndpoint(userId string, ep *CreateEndpointRequestBody) (*Endpoint, *e
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	endpointsCollection := db.Database.Collection(db.ENDPOINT_COLLECTION)
+	endpointsCollection := Database.Collection(ENDPOINT_COLLECTION)
 	_, insertErr := endpointsCollection.InsertOne(ctx, newEndpoint)
 	if insertErr != nil {
-		return nil, db.GetDbError(insertErr)
+		return nil, GetDbError(insertErr)
 	}
-	var createdEndpoint Endpoint
+	var createdEndpoint models.Endpoint
 	findErr := endpointsCollection.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: endpointId,
@@ -57,10 +45,10 @@ func CreateEndpoint(userId string, ep *CreateEndpointRequestBody) (*Endpoint, *e
 	return &createdEndpoint, nil
 }
 
-func GetEndpoints(mockServiceID string) ([]Endpoint, *err_utils.DetailedError) {
+func GetEndpoints(mockServiceID string) ([]models.Endpoint, *err_utils.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	endpointsCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
+	endpointsCol := Database.Collection(ENDPOINT_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": -1,
@@ -72,9 +60,9 @@ func GetEndpoints(mockServiceID string) ([]Endpoint, *err_utils.DetailedError) {
 
 	cursor, errFind := endpointsCol.Find(ctx, dbQuery, findOpts)
 	if errFind != nil {
-		return []Endpoint{}, err_utils.WrapAsDetailedError(errFind)
+		return []models.Endpoint{}, err_utils.WrapAsDetailedError(errFind)
 	}
-	result := make([]Endpoint, 0)
+	result := make([]models.Endpoint, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
 		return nil, err_utils.WrapAsDetailedError(err)
@@ -85,7 +73,7 @@ func GetEndpoints(mockServiceID string) ([]Endpoint, *err_utils.DetailedError) {
 func DeleteEndpoint(userID, endpointID string) (bool, *err_utils.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	endpointsCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
+	endpointsCol := Database.Collection(ENDPOINT_COLLECTION)
 	result, errDel := endpointsCol.DeleteOne(ctx, bson.D{
 		{Key: "id", Value: endpointID},
 		{Key: "createdBy", Value: userID},

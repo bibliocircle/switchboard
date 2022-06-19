@@ -1,29 +1,20 @@
-package workspace
+package db
 
 import (
 	"context"
 	"switchboard/internal/common/err_utils"
 	"switchboard/internal/common/randomdata"
-	"switchboard/internal/db"
+	"switchboard/internal/models"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Workspace struct {
-	ID        string    `json:"id" bson:"id,omitempty"`
-	Name      string    `json:"name" bson:"name,omitempty"`
-	ExpiresAt string    `json:"expiresAt,omitempty" bson:"expiresAt,omitempty"`
-	CreatedBy string    `json:"createdBy" bson:"createdBy,omitempty"`
-	CreatedAt time.Time `json:"createdAt" bson:"createdAt,omitempty"`
-	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt,omitempty"`
-}
-
-func CreateWorkspace(userId string, ws *CreateWorkspaceRequestBody) (*Workspace, *err_utils.DetailedError) {
+func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*models.Workspace, *err_utils.DetailedError) {
 	wsId := randomdata.GetShortId()
 	currentTime := time.Now()
-	newWs := &Workspace{
+	newWs := &models.Workspace{
 		ID:        wsId,
 		Name:      ws.Name,
 		ExpiresAt: ws.ExpiresAt,
@@ -33,12 +24,12 @@ func CreateWorkspace(userId string, ws *CreateWorkspaceRequestBody) (*Workspace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wsCollection := db.Database.Collection(db.WORKSPACES_COLLECTION)
+	wsCollection := Database.Collection(WORKSPACES_COLLECTION)
 	_, insertErr := wsCollection.InsertOne(ctx, newWs)
 	if insertErr != nil {
-		return nil, db.GetDbError(insertErr)
+		return nil, GetDbError(insertErr)
 	}
-	var createdWs Workspace
+	var createdWs models.Workspace
 	findErr := wsCollection.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: wsId,
@@ -49,10 +40,10 @@ func CreateWorkspace(userId string, ws *CreateWorkspaceRequestBody) (*Workspace,
 	return &createdWs, nil
 }
 
-func FindWorkspaces(filter *bson.D) ([]Workspace, *err_utils.DetailedError) {
+func FindWorkspaces(filter *bson.D) ([]models.Workspace, *err_utils.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wsCol := db.Database.Collection(db.WORKSPACES_COLLECTION)
+	wsCol := Database.Collection(WORKSPACES_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": -1,
@@ -61,9 +52,9 @@ func FindWorkspaces(filter *bson.D) ([]Workspace, *err_utils.DetailedError) {
 
 	cursor, errFind := wsCol.Find(ctx, filter, findOpts)
 	if errFind != nil {
-		return []Workspace{}, err_utils.WrapAsDetailedError(errFind)
+		return []models.Workspace{}, err_utils.WrapAsDetailedError(errFind)
 	}
-	result := make([]Workspace, 0)
+	result := make([]models.Workspace, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
 		return nil, err_utils.WrapAsDetailedError(err)
@@ -71,11 +62,11 @@ func FindWorkspaces(filter *bson.D) ([]Workspace, *err_utils.DetailedError) {
 	return result, nil
 }
 
-func GetWorkspaces() ([]Workspace, *err_utils.DetailedError) {
+func GetWorkspaces() ([]models.Workspace, *err_utils.DetailedError) {
 	return FindWorkspaces(&bson.D{})
 }
 
-func GetUserWorkspaces(userID string) ([]Workspace, *err_utils.DetailedError) {
+func GetUserWorkspaces(userID string) ([]models.Workspace, *err_utils.DetailedError) {
 	return FindWorkspaces(&bson.D{
 		{Key: "createdBy", Value: userID},
 	})
@@ -84,7 +75,7 @@ func GetUserWorkspaces(userID string) ([]Workspace, *err_utils.DetailedError) {
 func IsWorkspaceOwner(userId, workspaceId string) (bool, *err_utils.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wsCol := db.Database.Collection(db.WORKSPACES_COLLECTION)
+	wsCol := Database.Collection(WORKSPACES_COLLECTION)
 	count, err := wsCol.CountDocuments(ctx, bson.D{
 		{Key: "id", Value: workspaceId},
 		{Key: "createdBy", Value: userId},
@@ -98,7 +89,7 @@ func IsWorkspaceOwner(userId, workspaceId string) (bool, *err_utils.DetailedErro
 func DeleteWorkspace(userID, wsId string) (bool, *err_utils.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wsCol := db.Database.Collection(db.WORKSPACES_COLLECTION)
+	wsCol := Database.Collection(WORKSPACES_COLLECTION)
 	result, errDel := wsCol.DeleteOne(ctx, bson.D{
 		{Key: "id", Value: wsId},
 		{Key: "createdBy", Value: userID},

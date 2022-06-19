@@ -1,4 +1,4 @@
-package upstream
+package management_api
 
 import (
 	"fmt"
@@ -6,19 +6,15 @@ import (
 	"switchboard/internal/common/auth"
 	"switchboard/internal/common/constants"
 	"switchboard/internal/common/err_utils"
+	"switchboard/internal/db"
+	"switchboard/internal/models"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
 
-type CreateUpstreamRequestBody struct {
-	MockServiceId string `json:"mockServiceId" binding:"required"`
-	Name          string `json:"name" binding:"required"`
-	URL           string `json:"url" binding:"required,url"`
-}
-
 func CreateUpstreamRoute(c *gin.Context) {
-	var payload CreateUpstreamRequestBody
+	var payload models.CreateUpstreamRequestBody
 	if bindErr := c.ShouldBindJSON(&payload); bindErr != nil {
 		c.JSON(http.StatusBadRequest, err_utils.NewDetailedError(
 			err_utils.ErrorUnparsablePayload,
@@ -27,7 +23,7 @@ func CreateUpstreamRoute(c *gin.Context) {
 		return
 	}
 	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
-	createdUpstream, createErr := CreateUpstream(currentUser.ID, &payload)
+	createdUpstream, createErr := db.CreateUpstream(currentUser.ID, &payload)
 	if createErr == nil {
 		c.JSON(http.StatusCreated, createdUpstream)
 		return
@@ -42,7 +38,7 @@ func CreateUpstreamRoute(c *gin.Context) {
 }
 
 func GetUpstreamsByMockServiceIdRoute(c *gin.Context) {
-	upstreams, err := GetUpstreams(c.Param("mockServiceId"))
+	upstreams, err := db.GetUpstreams(c.Param("mockServiceId"))
 	if err != nil {
 		log.Errorln(fmt.Sprintf("could not retrieve upstreams. [error code: %s] [description: %s]", err.ErrorCode, err.Description))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.ErrorCode})
@@ -54,7 +50,7 @@ func GetUpstreamsByMockServiceIdRoute(c *gin.Context) {
 func DeleteUpstreamRoute(c *gin.Context) {
 	upstreamID := c.Param("upstreamId")
 	currentUser := c.Value(constants.REQ_USER_KEY).(*auth.User)
-	ok, err := DeleteUpstream(currentUser.ID, upstreamID)
+	ok, err := db.DeleteUpstream(currentUser.ID, upstreamID)
 	if err != nil {
 		log.Errorln(fmt.Sprintf("could not delete upstream %s. [error code: %s] [description: %s]", upstreamID, err.ErrorCode, err.Description))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.ErrorCode})
