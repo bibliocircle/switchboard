@@ -2,8 +2,7 @@ package db
 
 import (
 	"context"
-	"switchboard/internal/common/err_utils"
-	"switchboard/internal/common/randomdata"
+	"switchboard/internal/common"
 	"switchboard/internal/models"
 	"time"
 
@@ -11,8 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*models.Workspace, *err_utils.DetailedError) {
-	wsId := randomdata.GetShortId()
+func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*models.Workspace, *common.DetailedError) {
+	wsId := common.GetShortId()
 	currentTime := time.Now()
 	newWs := &models.Workspace{
 		ID:        wsId,
@@ -35,12 +34,12 @@ func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*mod
 		Value: wsId,
 	}}).Decode(&createdWs)
 	if findErr != nil {
-		return nil, err_utils.WrapAsDetailedError(findErr)
+		return nil, common.WrapAsDetailedError(findErr)
 	}
 	return &createdWs, nil
 }
 
-func FindWorkspaces(filter *bson.D) ([]models.Workspace, *err_utils.DetailedError) {
+func FindWorkspaces(filter *bson.D) ([]models.Workspace, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	wsCol := Database.Collection(WORKSPACES_COLLECTION)
@@ -52,27 +51,27 @@ func FindWorkspaces(filter *bson.D) ([]models.Workspace, *err_utils.DetailedErro
 
 	cursor, errFind := wsCol.Find(ctx, filter, findOpts)
 	if errFind != nil {
-		return []models.Workspace{}, err_utils.WrapAsDetailedError(errFind)
+		return []models.Workspace{}, common.WrapAsDetailedError(errFind)
 	}
 	result := make([]models.Workspace, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 	return result, nil
 }
 
-func GetWorkspaces() ([]models.Workspace, *err_utils.DetailedError) {
+func GetWorkspaces() ([]models.Workspace, *common.DetailedError) {
 	return FindWorkspaces(&bson.D{})
 }
 
-func GetUserWorkspaces(userID string) ([]models.Workspace, *err_utils.DetailedError) {
+func GetUserWorkspaces(userID string) ([]models.Workspace, *common.DetailedError) {
 	return FindWorkspaces(&bson.D{
 		{Key: "createdBy", Value: userID},
 	})
 }
 
-func IsWorkspaceOwner(userId, workspaceId string) (bool, *err_utils.DetailedError) {
+func IsWorkspaceOwner(userId, workspaceId string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	wsCol := Database.Collection(WORKSPACES_COLLECTION)
@@ -81,12 +80,12 @@ func IsWorkspaceOwner(userId, workspaceId string) (bool, *err_utils.DetailedErro
 		{Key: "createdBy", Value: userId},
 	})
 	if err != nil {
-		return false, err_utils.WrapAsDetailedError(err)
+		return false, common.WrapAsDetailedError(err)
 	}
 	return count > 0, nil
 }
 
-func DeleteWorkspace(userID, wsId string) (bool, *err_utils.DetailedError) {
+func DeleteWorkspace(userID, wsId string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	wsCol := Database.Collection(WORKSPACES_COLLECTION)
@@ -95,7 +94,7 @@ func DeleteWorkspace(userID, wsId string) (bool, *err_utils.DetailedError) {
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, err_utils.WrapAsDetailedError(errDel)
+		return false, common.WrapAsDetailedError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

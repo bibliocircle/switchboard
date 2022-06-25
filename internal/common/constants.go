@@ -1,4 +1,4 @@
-package constants
+package common
 
 const (
 	REQ_USER_KEY          = "user"

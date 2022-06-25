@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	"switchboard/internal/common/err_utils"
+	"switchboard/internal/common"
 	"switchboard/internal/models"
 	"time"
 
@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateWorkspaceSetting(userID, workspaceID, mockServiceID, endpointID string, scenarios []models.ScenarioConfig) *err_utils.DetailedError {
+func CreateWorkspaceSetting(userID, workspaceID, mockServiceID, endpointID string, scenarios []models.ScenarioConfig) *common.DetailedError {
 	currentTime := time.Now()
 	newWss := &models.WorkspaceSetting{
 		WorkspaceID:   workspaceID,
@@ -32,10 +32,10 @@ func CreateWorkspaceSetting(userID, workspaceID, mockServiceID, endpointID strin
 	return nil
 }
 
-func AddMockServiceToWorkspace(userID, workspaceID, mockServiceID string) *err_utils.DetailedError {
+func AddMockServiceToWorkspace(userID, workspaceID, mockServiceID string) *common.DetailedError {
 	endpoints, errEp := GetEndpoints(mockServiceID)
 	if errEp != nil {
-		return err_utils.WrapAsDetailedError(errEp)
+		return common.WrapAsDetailedError(errEp)
 	}
 
 	// TODO: This can be improved to use goroutines and channels
@@ -43,7 +43,7 @@ func AddMockServiceToWorkspace(userID, workspaceID, mockServiceID string) *err_u
 		sc := make([]models.ScenarioConfig, 0)
 		scenarios, errSc := GetScenarios(ep.ID)
 		if errSc != nil {
-			return err_utils.WrapAsDetailedError(errSc)
+			return common.WrapAsDetailedError(errSc)
 		}
 
 		for _, s := range scenarios {
@@ -62,7 +62,7 @@ func AddMockServiceToWorkspace(userID, workspaceID, mockServiceID string) *err_u
 	return nil
 }
 
-func GetWorkspaceSettings(workspaceID string) ([]models.WorkspaceSetting, *err_utils.DetailedError) {
+func GetWorkspaceSettings(workspaceID string) ([]models.WorkspaceSetting, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	wssCol := Database.Collection(WORKSPACE_SETTINGS_COLLECTION)
@@ -76,17 +76,17 @@ func GetWorkspaceSettings(workspaceID string) ([]models.WorkspaceSetting, *err_u
 		{Key: "workspaceId", Value: workspaceID},
 	}, findOpts)
 	if errFind != nil {
-		return nil, err_utils.WrapAsDetailedError(errFind)
+		return nil, common.WrapAsDetailedError(errFind)
 	}
 	result := make([]models.WorkspaceSetting, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 	return result, nil
 }
 
-func ActivateMockServiceScenario(workspaceID, mockServiceID, endpointID, scenarioID string) (bool, *err_utils.DetailedError) {
+func ActivateMockServiceScenario(workspaceID, mockServiceID, endpointID, scenarioID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	wssCol := Database.Collection("workspace_settings")
@@ -98,7 +98,7 @@ func ActivateMockServiceScenario(workspaceID, mockServiceID, endpointID, scenari
 	var wss models.WorkspaceSetting
 	findErr := wssCol.FindOne(ctx, q).Decode(&wss)
 	if findErr != nil {
-		return false, err_utils.WrapAsDetailedError(findErr)
+		return false, common.WrapAsDetailedError(findErr)
 	}
 
 	scenarios := make([]models.ScenarioConfig, 0)
@@ -124,7 +124,7 @@ func ActivateMockServiceScenario(workspaceID, mockServiceID, endpointID, scenari
 		},
 	}})
 	if err != nil {
-		return false, err_utils.WrapAsDetailedError(err)
+		return false, common.WrapAsDetailedError(err)
 	}
 	if result.ModifiedCount == 0 {
 		return false, nil
@@ -133,7 +133,7 @@ func ActivateMockServiceScenario(workspaceID, mockServiceID, endpointID, scenari
 	return true, nil
 }
 
-func UpdateWsMockServiceConfig(workspaceID, mockServiceID, endpointID string, wssUpdate *models.UpdateMockServiceConfigRequestBody) (*models.WorkspaceSetting, *err_utils.DetailedError) {
+func UpdateWsMockServiceConfig(workspaceID, mockServiceID, endpointID string, wssUpdate *models.UpdateMockServiceConfigRequestBody) (*models.WorkspaceSetting, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	wssCol := Database.Collection("workspace_settings")
@@ -150,7 +150,7 @@ func UpdateWsMockServiceConfig(workspaceID, mockServiceID, endpointID string, ws
 		},
 	}})
 	if err != nil {
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 	if result.ModifiedCount == 0 {
 		return nil, nil
@@ -158,7 +158,7 @@ func UpdateWsMockServiceConfig(workspaceID, mockServiceID, endpointID string, ws
 	var updatedWss models.WorkspaceSetting
 	findErr := wssCol.FindOne(ctx, q).Decode(&updatedWss)
 	if findErr != nil {
-		return nil, err_utils.WrapAsDetailedError(findErr)
+		return nil, common.WrapAsDetailedError(findErr)
 	}
 	return &updatedWss, nil
 }

@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"strings"
-	"switchboard/internal/common/err_utils"
+	"switchboard/internal/common"
 	"switchboard/internal/models"
 	"time"
 
@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*models.Endpoint, *err_utils.DetailedError) {
+func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*models.Endpoint, *common.DetailedError) {
 	eId, _ := uuid.NewRandom()
 	endpointId := eId.String()
 	currentTime := time.Now()
@@ -40,12 +40,12 @@ func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*model
 		Value: endpointId,
 	}}).Decode(&createdEndpoint)
 	if findErr != nil {
-		return nil, err_utils.WrapAsDetailedError(findErr)
+		return nil, common.WrapAsDetailedError(findErr)
 	}
 	return &createdEndpoint, nil
 }
 
-func GetEndpoints(mockServiceID string) ([]models.Endpoint, *err_utils.DetailedError) {
+func GetEndpoints(mockServiceID string) ([]models.Endpoint, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	endpointsCol := Database.Collection(ENDPOINT_COLLECTION)
@@ -60,17 +60,17 @@ func GetEndpoints(mockServiceID string) ([]models.Endpoint, *err_utils.DetailedE
 
 	cursor, errFind := endpointsCol.Find(ctx, dbQuery, findOpts)
 	if errFind != nil {
-		return []models.Endpoint{}, err_utils.WrapAsDetailedError(errFind)
+		return []models.Endpoint{}, common.WrapAsDetailedError(errFind)
 	}
 	result := make([]models.Endpoint, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 	return result, nil
 }
 
-func DeleteEndpoint(userID, endpointID string) (bool, *err_utils.DetailedError) {
+func DeleteEndpoint(userID, endpointID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	endpointsCol := Database.Collection(ENDPOINT_COLLECTION)
@@ -79,7 +79,7 @@ func DeleteEndpoint(userID, endpointID string) (bool, *err_utils.DetailedError) 
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, err_utils.WrapAsDetailedError(errDel)
+		return false, common.WrapAsDetailedError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

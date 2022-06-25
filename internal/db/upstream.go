@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	"switchboard/internal/common/err_utils"
+	"switchboard/internal/common"
 	"switchboard/internal/models"
 	"time"
 
@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (*models.Upstream, *err_utils.DetailedError) {
+func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (*models.Upstream, *common.DetailedError) {
 	eId, _ := uuid.NewRandom()
 	upstreamId := eId.String()
 	currentTime := time.Now()
@@ -37,12 +37,12 @@ func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (
 		Value: upstreamId,
 	}}).Decode(&createdUpstream)
 	if findErr != nil {
-		return nil, err_utils.WrapAsDetailedError(findErr)
+		return nil, common.WrapAsDetailedError(findErr)
 	}
 	return &createdUpstream, nil
 }
 
-func GetUpstreams(mockServiceID string) ([]models.Upstream, *err_utils.DetailedError) {
+func GetUpstreams(mockServiceID string) ([]models.Upstream, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	upstreamsCol := Database.Collection(UPSTREAMS_COLLECTION)
@@ -57,17 +57,17 @@ func GetUpstreams(mockServiceID string) ([]models.Upstream, *err_utils.DetailedE
 
 	cursor, errFind := upstreamsCol.Find(ctx, dbQuery, findOpts)
 	if errFind != nil {
-		return []models.Upstream{}, err_utils.WrapAsDetailedError(errFind)
+		return []models.Upstream{}, common.WrapAsDetailedError(errFind)
 	}
 	result := make([]models.Upstream, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 	return result, nil
 }
 
-func DeleteUpstream(userID, upstreamID string) (bool, *err_utils.DetailedError) {
+func DeleteUpstream(userID, upstreamID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	upstreamsCol := Database.Collection(UPSTREAMS_COLLECTION)
@@ -76,7 +76,7 @@ func DeleteUpstream(userID, upstreamID string) (bool, *err_utils.DetailedError) 
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, err_utils.WrapAsDetailedError(errDel)
+		return false, common.WrapAsDetailedError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

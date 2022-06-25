@@ -1,4 +1,4 @@
-package randomdata
+package common
 
 import (
 	sid "github.com/teris-io/shortid"

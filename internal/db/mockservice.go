@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	"switchboard/internal/common/err_utils"
+	"switchboard/internal/common"
 	"switchboard/internal/models"
 	"time"
 
@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (*models.MockService, *err_utils.DetailedError) {
+func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (*models.MockService, *common.DetailedError) {
 	currentTime := time.Now()
 	newMockService := &models.MockService{
 		ID:   ms.ID,
@@ -36,12 +36,12 @@ func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (
 		Value: ms.ID,
 	}}).Decode(&createdMockService)
 	if findErr != nil {
-		return nil, err_utils.WrapAsDetailedError(findErr)
+		return nil, common.WrapAsDetailedError(findErr)
 	}
 	return &createdMockService, nil
 }
 
-func GetMockServices() ([]models.MockService, *err_utils.DetailedError) {
+func GetMockServices() ([]models.MockService, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	mockServicesCol := Database.Collection(MOCKSERVICES_COLLECTION)
@@ -53,17 +53,17 @@ func GetMockServices() ([]models.MockService, *err_utils.DetailedError) {
 
 	cursor, errFind := mockServicesCol.Find(ctx, bson.D{}, findOpts)
 	if errFind != nil {
-		return []models.MockService{}, err_utils.WrapAsDetailedError(errFind)
+		return []models.MockService{}, common.WrapAsDetailedError(errFind)
 	}
 	result := make([]models.MockService, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 	return result, nil
 }
 
-func DeleteMockService(userID, mockServiceID string) (bool, *err_utils.DetailedError) {
+func DeleteMockService(userID, mockServiceID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	mockServicesCol := Database.Collection(MOCKSERVICES_COLLECTION)
@@ -72,7 +72,7 @@ func DeleteMockService(userID, mockServiceID string) (bool, *err_utils.DetailedE
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, err_utils.WrapAsDetailedError(errDel)
+		return false, common.WrapAsDetailedError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

@@ -1,4 +1,4 @@
-package err_utils
+package common
 
 const ErrorGeneric = "GENERIC_ERROR"
 const ErrorDuplicateEntity = "DUPLICATE_ENTITY"

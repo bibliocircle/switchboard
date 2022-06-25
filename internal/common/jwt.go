@@ -1,4 +1,4 @@
-package security
+package common
 
 import (
 	"os"

@@ -2,19 +2,19 @@ package db
 
 import (
 	e "errors"
-	"switchboard/internal/common/err_utils"
+	"switchboard/internal/common"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func GetDbError(err error) *err_utils.DetailedError {
+func GetDbError(err error) *common.DetailedError {
 	var we mongo.WriteException
 	if e.As(err, &we) {
 		for _, writeErr := range we.WriteErrors {
 			if writeErr.Code == 11000 {
-				return err_utils.NewDetailedError(err_utils.ErrorDuplicateEntity, "duplicate document exists")
+				return common.NewDetailedError(common.ErrorDuplicateEntity, "duplicate document exists")
 			}
 		}
 	}
-	return err_utils.WrapAsDetailedError(err)
+	return common.WrapAsDetailedError(err)
 }

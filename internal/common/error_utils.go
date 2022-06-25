@@ -1,4 +1,4 @@
-package err_utils
+package common
 
 type DetailedError struct {
 	ErrorCode   string `json:"errorCode"`

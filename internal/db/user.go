@@ -3,8 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
-	"switchboard/internal/common/err_utils"
-	"switchboard/internal/common/security"
+	"switchboard/internal/common"
 	"switchboard/internal/models"
 	"time"
 
@@ -13,15 +12,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func CreateUser(user *models.CreateUserRequest) (*models.User, *err_utils.DetailedError) {
+func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedError) {
 	userId, err := uuid.NewRandom()
 	if err != nil {
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 
-	hashedPassword, err := security.CreateHash(user.Password)
+	hashedPassword, err := common.CreateHash(user.Password)
 	if err != nil {
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 
 	currentTime := time.Now()
@@ -47,12 +46,12 @@ func CreateUser(user *models.CreateUserRequest) (*models.User, *err_utils.Detail
 		Key: "id", Value: userId.String(),
 	}}).Decode(&createdUser)
 	if findError != nil {
-		return nil, err_utils.WrapAsDetailedError(fmt.Errorf("could not retrieve created document %s", userId))
+		return nil, common.WrapAsDetailedError(fmt.Errorf("could not retrieve created document %s", userId))
 	}
 	return &createdUser, nil
 }
 
-func GetUserByID(userId string) (*models.User, *err_utils.DetailedError) {
+func GetUserByID(userId string) (*models.User, *common.DetailedError) {
 	var user models.User
 	userCollection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -65,12 +64,12 @@ func GetUserByID(userId string) (*models.User, *err_utils.DetailedError) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 	return &user, nil
 }
 
-func GetUserByEmailPassword(email string, password string) (*models.User, *err_utils.DetailedError) {
+func GetUserByEmailPassword(email string, password string) (*models.User, *common.DetailedError) {
 	var user models.User
 	userCollection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -83,11 +82,11 @@ func GetUserByEmailPassword(email string, password string) (*models.User, *err_u
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
-	passwordVerified, err := security.VerifyHash(password, []byte(user.Password))
+	passwordVerified, err := common.VerifyHash(password, []byte(user.Password))
 	if err != nil {
-		return nil, err_utils.WrapAsDetailedError(err)
+		return nil, common.WrapAsDetailedError(err)
 	}
 	if passwordVerified {
 		return &user, nil

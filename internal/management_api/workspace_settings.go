@@ -3,8 +3,7 @@ package management_api
 import (
 	"fmt"
 	"net/http"
-	"switchboard/internal/common/constants"
-	"switchboard/internal/common/err_utils"
+	"switchboard/internal/common"
 	"switchboard/internal/db"
 	"switchboard/internal/models"
 
@@ -13,7 +12,7 @@ import (
 )
 
 func AddMockServiceToWorkspaceRoute(c *gin.Context) {
-	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
+	currentUser := c.Value(common.REQ_USER_KEY).(*models.User)
 	workspaceId := c.Param("workspaceId")
 	mockServiceId := c.Param("mockServiceId")
 
@@ -35,7 +34,7 @@ func AddMockServiceToWorkspaceRoute(c *gin.Context) {
 		return
 	}
 
-	if err.ErrorCode == err_utils.ErrorDuplicateEntity {
+	if err.ErrorCode == common.ErrorDuplicateEntity {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "mock service is already added to the workspace"})
 		return
 	}
@@ -45,7 +44,7 @@ func AddMockServiceToWorkspaceRoute(c *gin.Context) {
 }
 
 func ActivateMockServiceScenarioRoute(c *gin.Context) {
-	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
+	currentUser := c.Value(common.REQ_USER_KEY).(*models.User)
 	workspaceId := c.Param("workspaceId")
 	mockServiceId := c.Param("mockServiceId")
 	endpointId := c.Param("endpointId")
@@ -81,13 +80,13 @@ func ActivateMockServiceScenarioRoute(c *gin.Context) {
 func UpdateWsMockServiceConfigRoute(c *gin.Context) {
 	var payload models.UpdateMockServiceConfigRequestBody
 	if bindErr := c.ShouldBindJSON(&payload); bindErr != nil {
-		c.JSON(http.StatusBadRequest, err_utils.NewDetailedError(
-			err_utils.ErrorUnparsablePayload,
+		c.JSON(http.StatusBadRequest, common.NewDetailedError(
+			common.ErrorUnparsablePayload,
 			bindErr.Error(),
 		))
 		return
 	}
-	currentUser := c.Value(constants.REQ_USER_KEY).(*models.User)
+	currentUser := c.Value(common.REQ_USER_KEY).(*models.User)
 	workspaceId := c.Param("workspaceId")
 	mockServiceId := c.Param("mockServiceId")
 	endpointId := c.Param("endpointId")
