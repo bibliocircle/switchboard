@@ -3,6 +3,7 @@ package common
 import (
 	"net/http"
 	"os"
+	"switchboard/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
@@ -10,15 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type User struct {
-	FirstName string `mapstructure:"firstName"`
-	Lastname  string `mapstructure:"lastName"`
-	Email     string `mapstructure:"email"`
-	ID        string `mapstructure:"id"`
-}
-
-func getUserFromClaims(c *jwt.MapClaims) (*User, error) {
-	u := &User{}
+func getUserFromClaims(c *jwt.MapClaims) (*models.User, error) {
+	u := &models.User{}
 	err := mapstructure.Decode(c, u)
 	if err != nil {
 		return nil, err
@@ -55,7 +49,7 @@ func ParseAuthToken() gin.HandlerFunc {
 
 func RequireAuthentication() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		currentUser := c.Value("user").(*User)
+		currentUser := c.Value("user").(*models.User)
 		if currentUser.ID == "" {
 			c.Writer.WriteHeader(http.StatusUnauthorized)
 			return
