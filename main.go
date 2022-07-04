@@ -2,18 +2,17 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"switchboard/internal/consumer_api"
 	"switchboard/internal/db"
 	"switchboard/internal/management_api"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 	env "github.com/joho/godotenv"
+	log "github.com/sirupsen/logrus"
 )
 
-type RouterFactory func(string) *gin.Engine
+type RouterFactory func(string, chan<- bool) *gin.Engine
 
 type serverConfig struct {
 	createRouterFn RouterFactory
@@ -21,8 +20,8 @@ type serverConfig struct {
 	port           string
 }
 
-func startServer(sc *serverConfig) error {
-	r := sc.createRouterFn(sc.servName)
+func startServer(sc *serverConfig, quit chan<- bool) error {
+	r := sc.createRouterFn(sc.servName, quit)
 	log.Printf("Starting server %s on port %s..\n", sc.servName, sc.port)
 	return r.Run(fmt.Sprintf(":%s", sc.port))
 }
@@ -49,15 +48,14 @@ func main() {
 		},
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(len(servers))
-
+	quit := make(chan bool)
 	for _, s := range servers {
 		go func(sc serverConfig) {
-			startServer(&sc)
-			wg.Done()
+			startServer(&sc, quit)
 		}(s)
 	}
 
-	wg.Wait()
+	if <-quit {
+		log.Fatalln("an error occurred while starting the servers")
+	}
 }

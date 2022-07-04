@@ -62,7 +62,7 @@ func setupAuthenticatedRoutes(r *gin.Engine) {
 	})
 }
 
-func CreateRouter(name string) *gin.Engine {
+func CreateRouter(name string, quit chan<- bool) *gin.Engine {
 	r := gin.New()
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		common.InitialiseValidator(v)

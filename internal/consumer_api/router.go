@@ -1,33 +1,76 @@
 package consumer_api
 
 import (
-	"net/http"
+	"fmt"
 	"switchboard/internal/common"
+	"switchboard/internal/db"
+	"switchboard/internal/models"
+	"sync"
 
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
 
-func CreateRouter(name string) *gin.Engine {
+type RouteConfig struct {
+	MockService models.MockService
+	Endpoint    models.Endpoint
+}
+
+func launchEndpoints(services <-chan models.MockService, quit chan<- bool) chan RouteConfig {
+	rc := make(chan RouteConfig)
+	go func() {
+		var wg sync.WaitGroup
+		for s := range services {
+			wg.Add(1)
+			go func(svc models.MockService) {
+				endpoints, err := db.GetEndpoints(svc.ID)
+				if err != nil {
+					log.Errorln(fmt.Sprintf("could not launch endpoints for mock service: %s (ID: %s)", svc.Name, svc.ID), err)
+					quit <- true
+				}
+				for _, e := range endpoints {
+					rc <- RouteConfig{
+						MockService: svc,
+						Endpoint:    e,
+					}
+				}
+				wg.Done()
+			}(s)
+		}
+		wg.Wait()
+		close(rc)
+	}()
+	return rc
+}
+
+func launchServices(quit chan<- bool) chan models.MockService {
+	services := make(chan models.MockService)
+	go func() {
+		mslist, err := db.GetMockServices()
+		if err != nil {
+			log.Errorln("could not retrieve mock services", err)
+			quit <- true
+		}
+		for _, s := range mslist {
+			services <- s
+		}
+		close(services)
+	}()
+	return services
+}
+
+func CreateRouter(name string, quit chan<- bool) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{
 		Formatter: common.CreateGinLogFormatter(name),
 	}))
 	r.Use(gin.Recovery())
 
-	/*
-	* Request format: GET http://localhost:9999/ws/1234/order-api/order/20
-	 */
-	r.Any("/ws/:workspaceId/:mockServiceId/*path", func(c *gin.Context) {
-		wsID := c.Param("workspaceId")
-		msID := c.Param("mockServiceId")
-		path := c.Param("path")
+	services := launchServices(quit)
+	routeConfigs := launchEndpoints(services, quit)
 
-		c.JSON(http.StatusAccepted, gin.H{
-			"wsID": wsID,
-			"msID": msID,
-			"path": path,
-		})
-	})
-
+	for rc := range routeConfigs {
+		go InitRoute(r, rc)
+	}
 	return r
 }
