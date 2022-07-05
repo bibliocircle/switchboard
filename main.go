@@ -12,18 +12,34 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type RouterFactory func(string, chan<- bool) *gin.Engine
+const (
+	CONSUMER_API_NAME   = "CONSUMER_API"
+	MANAGEMENT_API_NAME = "MANAGEMENT_API"
+)
 
 type serverConfig struct {
-	createRouterFn RouterFactory
-	servName       string
-	port           string
+	name   string
+	router *gin.Engine
+	port   string
 }
 
-func startServer(sc *serverConfig, quit chan<- bool) error {
-	r := sc.createRouterFn(sc.servName, quit)
-	log.Printf("Starting server %s on port %s..\n", sc.servName, sc.port)
-	return r.Run(fmt.Sprintf(":%s", sc.port))
+func startConsumerAPI(reload chan bool, quit chan<- bool) {
+	port := os.Getenv("CONSUMER_API_PORT")
+	c_api := consumer_api.New(CONSUMER_API_NAME)
+	c_api.InitialiseRouter(reload, quit)
+	fmt.Printf("%s is starting on port %s...\n", CONSUMER_API_NAME, port)
+	if err := c_api.Router.Run(fmt.Sprintf(":%s", port)); err != nil {
+		fmt.Println("Could not start consumer API", err)
+	}
+}
+
+func startManagementAPI(reload chan bool, quit chan<- bool) {
+	port := os.Getenv("MANAGEMENT_API_PORT")
+	m_api := management_api.CreateRouter(MANAGEMENT_API_NAME, reload, quit)
+	fmt.Printf("%s is starting on port %s...\n", MANAGEMENT_API_NAME, port)
+	if err := m_api.Run(fmt.Sprintf(":%s", port)); err != nil {
+		fmt.Println("Could not start management API", err)
+	}
 }
 
 func main() {
@@ -35,25 +51,10 @@ func main() {
 	db.RunMigrations()
 	gin.SetMode(gin.ReleaseMode)
 
-	servers := []serverConfig{
-		{
-			createRouterFn: management_api.CreateRouter,
-			servName:       "MANAGEMENT_API",
-			port:           os.Getenv("MANAGEMENT_API_PORT"),
-		},
-		{
-			createRouterFn: consumer_api.CreateRouter,
-			servName:       "CONSUMER_API",
-			port:           os.Getenv("CONSUMER_API_PORT"),
-		},
-	}
-
+	reload := make(chan bool)
 	quit := make(chan bool)
-	for _, s := range servers {
-		go func(sc serverConfig) {
-			startServer(&sc, quit)
-		}(s)
-	}
+	go startConsumerAPI(reload, quit)
+	go startManagementAPI(reload, quit)
 
 	if <-quit {
 		log.Fatalln("an error occurred while starting the servers")

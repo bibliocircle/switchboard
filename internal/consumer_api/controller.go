@@ -1,37 +1,99 @@
 package consumer_api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"switchboard/internal/common"
+	"switchboard/internal/db"
+	"switchboard/internal/models"
 
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func createMiddleware(rc *RouteConfig) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// configure default response headers
-		for k, v := range rc.MockService.Config.InjectHeaders {
-			c.Header(k, v)
-		}
-		c.Next()
+func activateHTTPResponseScenario(cfg *models.HTTPResponseScenarioConfig, ctx *gin.Context) {
+	ctx.Status(int(cfg.StatusCode))
+	headers := map[string]string{}
+	headersStr, rhErr := common.GenFakeData(cfg.ResponseHeadersTemplate)
+	if rhErr != nil {
+		log.Errorln(rhErr)
+		ctx.Writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	bodyStr, bErr := common.GenFakeData(cfg.ResponseBodyTemplate)
+	if bErr != nil {
+		log.Errorln(bErr)
+		ctx.Writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	json.Unmarshal([]byte(headersStr), &headers)
+	for h_name, h_value := range headers {
+		ctx.Header(h_name, h_value)
+	}
+	ctx.Writer.Write([]byte(bodyStr))
+}
+
+func activateScenario(sc *models.Scenario, ctx *gin.Context) {
+	switch sc.Type {
+	case common.HTTP_SCENARIO_TYPE:
+		activateHTTPResponseScenario(sc.HTTPResponseScenarioConfig, ctx)
+	default:
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("misconfigured service! unknown scenario type: %s", sc.Type),
+		})
 	}
 }
 
-func InitRoute(r *gin.Engine, cfg RouteConfig) {
-	routePath := fmt.Sprintf("/ws/:workspaceId/%s%s", cfg.MockService.ID, cfg.Endpoint.Path)
-	middleware := createMiddleware(&cfg)
-	routeHandler := func(c *gin.Context) {
+func CreateRoute(mockServiceID, endpointID string) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
 		wsID := c.Param("workspaceId")
-		msID := cfg.MockService.ID
-		path := cfg.Endpoint.Path
+		msID := mockServiceID
+		eID := endpointID
 
-		c.JSON(http.StatusAccepted, gin.H{
-			"wsID": wsID,
-			"msID": msID,
-			"path": path,
-		})
+		wss, wsErr := db.GetWorkspaceSetting(wsID, eID)
+		if wsErr != nil {
+			if wsErr.Error() == mongo.ErrNoDocuments.Error() {
+				c.JSON(http.StatusUnprocessableEntity, gin.H{
+					"error": fmt.Sprintf("mock service '%s' is not enabled on this workspace", msID),
+				})
+				return
+			}
+			c.Writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var activeScenarioId string
+		for _, s := range wss.Scenarios {
+			if s.IsActive {
+				activeScenarioId = s.ScenarioID
+				break
+			}
+		}
+
+		if activeScenarioId == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "no active scenario configured for this endpoint on this workspace",
+			})
+			return
+		}
+
+		sc, scErr := db.GetScenarioByID(activeScenarioId)
+		if scErr != nil {
+			if scErr.Error() == mongo.ErrNoDocuments.Error() {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "active scenario could not be found for the endpoint on this workspace",
+				})
+				return
+			}
+			c.Writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		activateScenario(sc, c)
 	}
-
-	r.Handle(cfg.Endpoint.Method, routePath, middleware, routeHandler)
-	fmt.Printf("initialised endpoint %s %s\n", cfg.Endpoint.Method, routePath)
 }

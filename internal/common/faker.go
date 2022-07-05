@@ -1,7 +1,7 @@
 package common
 
 import (
-	"io"
+	"bytes"
 	"regexp"
 	"text/template"
 
@@ -94,24 +94,29 @@ type faker struct {
 	Zip                 string `fake:"{zip}"`
 }
 
-func GenFakeJson(inputjson string, wr io.Writer) error {
+func GenFakeData(input string) (string, error) {
+	if input == "" {
+		return input, nil
+	}
 	rg := regexp.MustCompile(`{{(.+)}}`)
-	replaced := rg.ReplaceAll([]byte(inputjson), []byte("{{.$1}}"))
+	replaced := rg.ReplaceAll([]byte(input), []byte("{{.$1}}"))
 
 	var f faker
 	ferr := gofakeit.Struct(&f)
 
 	if ferr != nil {
-		return ferr
+		return "", ferr
 	}
 
 	tmpl, tmplErr := template.New("x").Parse(string(replaced))
 	if tmplErr != nil {
-		return tmplErr
+		return "", tmplErr
 	}
-	err := tmpl.Execute(wr, f)
+	buf := new(bytes.Buffer)
+	err := tmpl.Execute(buf, f)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+
+	return buf.String(), nil
 }

@@ -97,3 +97,19 @@ func GetScenarios(endpointID string) ([]models.Scenario, *common.DetailedError) 
 	}
 	return result, nil
 }
+
+func GetScenarioByID(scenarioID string) (*models.Scenario, *common.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	scenariosCol := Database.Collection(SCENARIOS_COLLECTION)
+
+	var sc models.Scenario
+	err := scenariosCol.FindOne(ctx, bson.D{
+		{Key: "id", Value: scenarioID},
+	}).Decode(&sc)
+
+	if err != nil {
+		return nil, common.WrapAsDetailedError(err)
+	}
+	return &sc, nil
+}

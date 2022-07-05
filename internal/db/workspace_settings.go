@@ -86,6 +86,23 @@ func GetWorkspaceSettings(workspaceID string) ([]models.WorkspaceSetting, *commo
 	return result, nil
 }
 
+func GetWorkspaceSetting(workspaceID, endpointID string) (*models.WorkspaceSetting, *common.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	wssCol := Database.Collection(WORKSPACE_SETTINGS_COLLECTION)
+
+	var wss models.WorkspaceSetting
+	err := wssCol.FindOne(ctx, bson.D{
+		{Key: "workspaceId", Value: workspaceID},
+		{Key: "endpointId", Value: endpointID},
+	}).Decode(&wss)
+
+	if err != nil {
+		return nil, common.WrapAsDetailedError(err)
+	}
+	return &wss, nil
+}
+
 func ActivateMockServiceScenario(workspaceID, mockServiceID, endpointID, scenarioID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

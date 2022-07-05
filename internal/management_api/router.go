@@ -2,7 +2,7 @@ package management_api
 
 import (
 	"io"
-	"log"
+	"net/http"
 	"switchboard/internal/common"
 
 	"github.com/gin-gonic/gin"
@@ -48,21 +48,18 @@ func setupAuthenticatedRoutes(r *gin.Engine) {
 	r.POST("/randomjson", func(c *gin.Context) {
 		jsonData, err := io.ReadAll(c.Request.Body)
 		if err != nil {
-			c.Status(500)
+			c.Writer.WriteHeader(http.StatusInternalServerError)
+		}
+		data, fErr := common.GenFakeData(string(jsonData))
+		if fErr != nil {
+			c.Writer.WriteHeader(http.StatusInternalServerError)
 		}
 		c.Header("Content-Type", "application/json")
-
-		c.Stream(func(w io.Writer) bool {
-			err := common.GenFakeJson(string(jsonData), w)
-			if err != nil {
-				log.Println(err)
-			}
-			return false
-		})
+		c.Writer.Write([]byte(data))
 	})
 }
 
-func CreateRouter(name string, quit chan<- bool) *gin.Engine {
+func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
 	r := gin.New()
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		common.InitialiseValidator(v)
