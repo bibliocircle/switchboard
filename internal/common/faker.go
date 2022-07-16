@@ -2,13 +2,14 @@ package common
 
 import (
 	"bytes"
+	"html/template"
+	"reflect"
 	"regexp"
-	"text/template"
 
 	"github.com/brianvoe/gofakeit/v6"
 )
 
-type faker struct {
+type fakeData struct {
 	Adverb              string `fake:"{adverb}"`
 	Animal              string `fake:"{animal}"`
 	AnimalType          string `fake:"{animaltype}"`
@@ -94,29 +95,33 @@ type faker struct {
 	Zip                 string `fake:"{zip}"`
 }
 
+func getFakeMap() *map[string]interface{} {
+	var fd fakeData
+	ferr := gofakeit.Struct(&fd)
+
+	if ferr != nil {
+		return nil
+	}
+
+	v := reflect.ValueOf(fd)
+	fakeMap := make(map[string]interface{}, v.NumField())
+	for i := 0; i < v.NumField(); i++ {
+		fakeMap[v.Type().Field(i).Name] = v.Field(i).Interface()
+	}
+	return &fakeMap
+}
+
 func GenFakeData(input string) (string, error) {
 	if input == "" {
 		return input, nil
 	}
-	rg := regexp.MustCompile(`{{(.+)}}`)
-	replaced := rg.ReplaceAll([]byte(input), []byte("{{.$1}}"))
-
-	var f faker
-	ferr := gofakeit.Struct(&f)
-
-	if ferr != nil {
-		return "", ferr
-	}
-
-	tmpl, tmplErr := template.New("x").Parse(string(replaced))
+	rg := regexp.MustCompile(`{{\s*`)
+	replaced := rg.ReplaceAll([]byte(input), []byte("{{."))
+	tmpl, tmplErr := template.New("").Option("missingkey=zero").Parse(string(replaced))
 	if tmplErr != nil {
 		return "", tmplErr
 	}
 	buf := new(bytes.Buffer)
-	err := tmpl.Execute(buf, f)
-	if err != nil {
-		return "", err
-	}
-
+	tmpl.Execute(buf, getFakeMap())
 	return buf.String(), nil
 }
