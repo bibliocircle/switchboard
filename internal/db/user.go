@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedError) {
@@ -35,7 +36,7 @@ func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedE
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	userCollection := Database.Collection("users")
+	userCollection := Database.Collection(USERS_COLLECTION)
 	_, insertError := userCollection.InsertOne(ctx, newUser)
 	if insertError != nil {
 		return nil, GetDbError(insertError)
@@ -53,7 +54,7 @@ func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedE
 
 func GetUserByID(userId string) (*models.User, *common.DetailedError) {
 	var user models.User
-	userCollection := Database.Collection("users")
+	userCollection := Database.Collection(USERS_COLLECTION)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := userCollection.FindOne(ctx, bson.D{{
@@ -69,9 +70,30 @@ func GetUserByID(userId string) (*models.User, *common.DetailedError) {
 	return &user, nil
 }
 
+func GetUsers() ([]models.User, *common.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	userCollection := Database.Collection(USERS_COLLECTION)
+	findOpts := &options.FindOptions{
+		Sort: &map[string]int64{
+			"createdAt": -1,
+		},
+	}
+	cursor, errFind := userCollection.Find(ctx, bson.D{}, findOpts)
+	if errFind != nil {
+		return []models.User{}, common.WrapAsDetailedError(errFind)
+	}
+	result := make([]models.User, 0)
+	err := cursor.All(ctx, &result)
+	if err != nil {
+		return nil, common.WrapAsDetailedError(err)
+	}
+	return result, nil
+}
+
 func GetUserByEmailPassword(email string, password string) (*models.User, *common.DetailedError) {
 	var user models.User
-	userCollection := Database.Collection("users")
+	userCollection := Database.Collection(USERS_COLLECTION)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := userCollection.FindOne(ctx, bson.D{{

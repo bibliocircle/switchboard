@@ -4,10 +4,13 @@ import (
 	"io"
 	"net/http"
 	"switchboard/internal/common"
+	"switchboard/internal/gql"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/handler"
 )
 
 func setupUnauthenticatedRoutes(r *gin.Engine) {
@@ -60,6 +63,19 @@ func setupAuthenticatedRoutes(r *gin.Engine) {
 }
 
 func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
+	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: gql.GqlSchema}
+	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}
+	schema, err := graphql.NewSchema(schemaConfig)
+	if err != nil {
+		panic(err)
+	}
+
+	h := handler.New(&handler.Config{
+		Schema:   &schema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+
 	r := gin.New()
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		common.InitialiseValidator(v)
@@ -77,5 +93,8 @@ func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
 	r.Use(common.RequireAuthentication())
 
 	setupAuthenticatedRoutes(r)
+	r.Any("/graphql", func(ctx *gin.Context) {
+		h.ServeHTTP(ctx.Writer, ctx.Request)
+	})
 	return r
 }

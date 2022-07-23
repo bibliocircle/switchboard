@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type User struct {
 	ID            string    `json:"id" bson:"id,omitempty" mapstructure:"id"`

@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type GlobalMockServiceConfig struct {
 	InjectHeaders map[string]string `json:"injectHeaders" bson:"injectHeaders,omitempty"`

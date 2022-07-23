@@ -63,6 +63,21 @@ func GetMockServices() ([]models.MockService, *common.DetailedError) {
 	return result, nil
 }
 
+func GetMockServiceByID(ID string) (*models.MockService, *common.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var ms models.MockService
+	mockServicesCol := Database.Collection(MOCKSERVICES_COLLECTION)
+	findErr := mockServicesCol.FindOne(ctx, bson.D{{
+		Key:   "id",
+		Value: ID,
+	}}).Decode(&ms)
+	if findErr != nil {
+		return nil, common.WrapAsDetailedError(findErr)
+	}
+	return &ms, nil
+}
+
 func DeleteMockService(userID, mockServiceID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

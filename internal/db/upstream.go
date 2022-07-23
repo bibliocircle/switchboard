@@ -67,6 +67,21 @@ func GetUpstreams(mockServiceID string) ([]models.Upstream, *common.DetailedErro
 	return result, nil
 }
 
+func GetUpstreamByID(ID string) (*models.Upstream, *common.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var upstream models.Upstream
+	upstreamsCol := Database.Collection(UPSTREAMS_COLLECTION)
+	findErr := upstreamsCol.FindOne(ctx, bson.D{{
+		Key:   "id",
+		Value: ID,
+	}}).Decode(&upstream)
+	if findErr != nil {
+		return nil, common.WrapAsDetailedError(findErr)
+	}
+	return &upstream, nil
+}
+
 func DeleteUpstream(userID, upstreamID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
