@@ -85,7 +85,7 @@ func (r ConsumerApiRouter) initServices(quit chan<- bool) chan models.MockServic
 			log.Errorln("could not retrieve mock services", err)
 			quit <- true
 		}
-		for _, s := range mslist {
+		for _, s := range *mslist {
 			services <- s
 		}
 		close(services)

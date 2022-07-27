@@ -86,6 +86,41 @@ func GetWorkspaceSettings(workspaceID string) ([]models.WorkspaceSetting, *commo
 	return result, nil
 }
 
+func GetWorkspaceMockServices(workspaceID string) ([]models.MockService, *common.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	wssCol := Database.Collection(WORKSPACE_SETTINGS_COLLECTION)
+
+	mockServiceIDs, errMSIDs := wssCol.Distinct(ctx, "mockServiceId", bson.D{
+		{Key: "workspaceId", Value: workspaceID},
+	})
+	if errMSIDs != nil {
+		return nil, common.WrapAsDetailedError(errMSIDs)
+	}
+
+	msFindOpts := &options.FindOptions{
+		Sort: &map[string]int64{
+			"createdAt": 1,
+		},
+	}
+	msCollection := Database.Collection(MOCKSERVICES_COLLECTION)
+	cursor, errFind := msCollection.Find(ctx, bson.D{
+		{Key: "id", Value: bson.D{{
+			Key:   "$in",
+			Value: mockServiceIDs},
+		}},
+	}, msFindOpts)
+	if errFind != nil {
+		return nil, common.WrapAsDetailedError(errFind)
+	}
+	mockServices := make([]models.MockService, 0)
+	err := cursor.All(ctx, &mockServices)
+	if err != nil {
+		return nil, common.WrapAsDetailedError(err)
+	}
+	return mockServices, nil
+}
+
 func GetWorkspaceSetting(workspaceID, endpointID string) (*models.WorkspaceSetting, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

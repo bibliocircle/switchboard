@@ -25,6 +25,9 @@ var HTTPResponseScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 var ProxyScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "ProxyScenarioConfig",
 	Fields: graphql.Fields{
+		"name": &graphql.Field{
+			Type: graphql.String,
+		},
 		"upstream": &graphql.Field{
 			Type: UpstreamGqlType,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -36,7 +39,7 @@ var ProxyScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 				if err != nil {
 					return nil, err
 				}
-				return upstream, nil
+				return *upstream, nil
 			},
 		},
 		"injectHeaders": &graphql.Field{

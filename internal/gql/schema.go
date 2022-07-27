@@ -35,4 +35,17 @@ var GqlSchema = graphql.Fields{
 		Type:    graphql.NewList(WorkspaceGqlType),
 		Resolve: WorkspacesResolver,
 	},
+	"userWorkspaces": &graphql.Field{
+		Type:    graphql.NewList(WorkspaceGqlType),
+		Resolve: UserWorkspacesResolver,
+	},
+	"userWorkspace": &graphql.Field{
+		Type: WorkspaceGqlType,
+		Args: graphql.FieldConfigArgument{
+			"workspaceId": &graphql.ArgumentConfig{
+				Type: graphql.String,
+			},
+		},
+		Resolve: UserWorkspaceResolver,
+	},
 }

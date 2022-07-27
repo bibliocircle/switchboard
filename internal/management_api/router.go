@@ -94,7 +94,7 @@ func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
 
 	setupAuthenticatedRoutes(r)
 	r.Any("/graphql", func(ctx *gin.Context) {
-		h.ServeHTTP(ctx.Writer, ctx.Request)
+		h.ServeHTTP(ctx.Writer, ctx.Request.WithContext(ctx))
 	})
 	return r
 }

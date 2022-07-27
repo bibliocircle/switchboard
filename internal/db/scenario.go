@@ -33,7 +33,7 @@ func CreateScenario(userId string, sc *models.CreateScenarioRequestBody) (*model
 	if err != nil {
 		return nil, common.WrapAsDetailedError(err)
 	}
-	isDefaultScenario = count != 0
+	isDefaultScenario = count == 0
 	newScenario := &models.Scenario{
 		ID:         scenarioId,
 		EndpointId: sc.EndpointId,
@@ -52,6 +52,7 @@ func CreateScenario(userId string, sc *models.CreateScenarioRequestBody) (*model
 		}
 	case common.PROXY_SCENARIO_TYPE:
 		newScenario.ProxyScenarioConfig = &models.ProxyScenarioConfig{
+			Name:          sc.ProxyScenarioConfig.Name,
 			UpstreamID:    sc.ProxyScenarioConfig.UpstreamID,
 			InjectHeaders: sc.ProxyScenarioConfig.InjectHeaders,
 		}

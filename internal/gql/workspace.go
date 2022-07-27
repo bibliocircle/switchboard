@@ -1,6 +1,7 @@
 package gql
 
 import (
+	"switchboard/internal/common"
 	"switchboard/internal/db"
 	"switchboard/internal/models"
 
@@ -15,6 +16,10 @@ var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"name": &graphql.Field{
 			Type: graphql.String,
+		},
+		"mockServices": &graphql.Field{
+			Type:    graphql.NewList(MockServiceGqlType),
+			Resolve: WorkspaceMockServicesResolver,
 		},
 		"expiresAt": &graphql.Field{
 			Type: graphql.String,
@@ -39,10 +44,41 @@ var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
+var WorkspaceMockServicesResolver = func(p graphql.ResolveParams) (interface{}, error) {
+	workspaceID := p.Source.(models.Workspace).ID
+	mss, err := db.GetWorkspaceMockServices(workspaceID)
+	if err != nil {
+		return make([]models.Workspace, 0), err
+	}
+	return mss, nil
+}
+
 var WorkspacesResolver = func(p graphql.ResolveParams) (interface{}, error) {
 	wss, err := db.GetWorkspaces()
 	if err != nil {
 		return make([]models.Workspace, 0), err
 	}
 	return wss, nil
+}
+
+var UserWorkspacesResolver = func(p graphql.ResolveParams) (interface{}, error) {
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
+	wss, err := db.GetUserWorkspaces(currentUser.ID)
+	if err != nil {
+		return make([]models.Workspace, 0), err
+	}
+	return wss, nil
+}
+
+var UserWorkspaceResolver = func(p graphql.ResolveParams) (interface{}, error) {
+	workspaceID, ok := p.Args["workspaceId"].(string)
+	if ok {
+		currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
+		wss, err := db.GetUserWorkspaceByID(currentUser.ID, workspaceID)
+		if err != nil {
+			return make([]models.Workspace, 0), err
+		}
+		return *wss, nil
+	}
+	return nil, nil
 }

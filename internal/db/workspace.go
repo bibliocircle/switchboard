@@ -39,7 +39,7 @@ func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*mod
 	return &createdWs, nil
 }
 
-func FindWorkspaces(filter *bson.D) ([]models.Workspace, *common.DetailedError) {
+func FindWorkspaces(filter *bson.D) (*[]models.Workspace, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	wsCol := Database.Collection(WORKSPACES_COLLECTION)
@@ -51,24 +51,45 @@ func FindWorkspaces(filter *bson.D) ([]models.Workspace, *common.DetailedError) 
 
 	cursor, errFind := wsCol.Find(ctx, filter, findOpts)
 	if errFind != nil {
-		return []models.Workspace{}, common.WrapAsDetailedError(errFind)
+		return &[]models.Workspace{}, common.WrapAsDetailedError(errFind)
 	}
 	result := make([]models.Workspace, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
 		return nil, common.WrapAsDetailedError(err)
 	}
-	return result, nil
+	return &result, nil
 }
 
-func GetWorkspaces() ([]models.Workspace, *common.DetailedError) {
+func GetWorkspaces() (*[]models.Workspace, *common.DetailedError) {
 	return FindWorkspaces(&bson.D{})
 }
 
-func GetUserWorkspaces(userID string) ([]models.Workspace, *common.DetailedError) {
+func GetUserWorkspaces(userID string) (*[]models.Workspace, *common.DetailedError) {
 	return FindWorkspaces(&bson.D{
 		{Key: "createdBy", Value: userID},
 	})
+}
+
+func GetUserWorkspaceByID(userID, workspaceID string) (*models.Workspace, *common.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var ws models.Workspace
+	wsCol := Database.Collection(WORKSPACES_COLLECTION)
+	findErr := wsCol.FindOne(ctx, bson.D{
+		{
+			Key:   "id",
+			Value: workspaceID,
+		},
+		{
+			Key:   "createdBy",
+			Value: userID,
+		},
+	}).Decode(&ws)
+	if findErr != nil {
+		return nil, common.WrapAsDetailedError(findErr)
+	}
+	return &ws, nil
 }
 
 func IsWorkspaceOwner(userId, workspaceId string) (bool, *common.DetailedError) {

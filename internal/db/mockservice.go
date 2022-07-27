@@ -41,7 +41,7 @@ func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (
 	return &createdMockService, nil
 }
 
-func GetMockServices() ([]models.MockService, *common.DetailedError) {
+func GetMockServices() (*[]models.MockService, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	mockServicesCol := Database.Collection(MOCKSERVICES_COLLECTION)
@@ -53,14 +53,14 @@ func GetMockServices() ([]models.MockService, *common.DetailedError) {
 
 	cursor, errFind := mockServicesCol.Find(ctx, bson.D{}, findOpts)
 	if errFind != nil {
-		return []models.MockService{}, common.WrapAsDetailedError(errFind)
+		return &[]models.MockService{}, common.WrapAsDetailedError(errFind)
 	}
 	result := make([]models.MockService, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
 		return nil, common.WrapAsDetailedError(err)
 	}
-	return result, nil
+	return &result, nil
 }
 
 func GetMockServiceByID(ID string) (*models.MockService, *common.DetailedError) {
