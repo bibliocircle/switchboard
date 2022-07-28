@@ -55,7 +55,7 @@ func CreateRoute(mockServiceID, endpointID string) gin.HandlerFunc {
 		msID := mockServiceID
 		eID := endpointID
 
-		wss, wsErr := db.GetWorkspaceSetting(wsID, eID)
+		wss, wsErr := db.GetWorkspaceSetting(wsID, msID)
 		if wsErr != nil {
 			if wsErr.Error() == mongo.ErrNoDocuments.Error() {
 				c.JSON(http.StatusUnprocessableEntity, gin.H{
@@ -68,10 +68,14 @@ func CreateRoute(mockServiceID, endpointID string) gin.HandlerFunc {
 		}
 
 		var activeScenarioId string
-		for _, s := range wss.Scenarios {
-			if s.IsActive {
-				activeScenarioId = s.ScenarioID
-				break
+		for _, ec := range wss.EndpointConfigs {
+			if ec.EndpointID == eID {
+				for _, sc := range ec.ScenarioConfigs {
+					if sc.IsActive {
+						activeScenarioId = sc.ScenarioID
+						break
+					}
+				}
 			}
 		}
 

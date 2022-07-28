@@ -1,0 +1,20 @@
+[
+    {
+        "dropIndexes": "workspace_settings",
+        "index": "primary_unique_key"
+    },
+    {
+        "createIndexes": "workspace_settings",
+        "indexes": [
+            {
+                "key": {
+                    "workspaceId": 1,
+                    "mockServiceId": 1,
+                    "endpointId": 1
+                },
+                "unique": true,
+                "name": "primary_unique_key"
+            }
+        ]
+    }
+]

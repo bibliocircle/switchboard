@@ -48,4 +48,25 @@ var GqlSchema = graphql.Fields{
 		},
 		Resolve: UserWorkspaceResolver,
 	},
+	"workspaceSettings": &graphql.Field{
+		Type: graphql.NewList(WorkspaceSettingGqlType),
+		Args: graphql.FieldConfigArgument{
+			"workspaceId": &graphql.ArgumentConfig{
+				Type: graphql.String,
+			},
+		},
+		Resolve: WorkspaceSettingsResolver,
+	},
+	"workspaceSetting": &graphql.Field{
+		Type: WorkspaceSettingGqlType,
+		Args: graphql.FieldConfigArgument{
+			"workspaceId": &graphql.ArgumentConfig{
+				Type: graphql.String,
+			},
+			"mockServiceId": &graphql.ArgumentConfig{
+				Type: graphql.String,
+			},
+		},
+		Resolve: WorkspaceSettingResolver,
+	},
 }

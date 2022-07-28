@@ -24,6 +24,9 @@ var GlobalMockServiceConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 				return headers, nil
 			},
 		},
+		"globalResponseDelay": &graphql.Field{
+			Type: graphql.Int,
+		},
 	},
 })
 

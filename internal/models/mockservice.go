@@ -5,7 +5,8 @@ import (
 )
 
 type GlobalMockServiceConfig struct {
-	InjectHeaders map[string]string `json:"injectHeaders" bson:"injectHeaders,omitempty"`
+	InjectHeaders       map[string]string `json:"injectHeaders" bson:"injectHeaders"`
+	GlobalResponseDelay uint16            `json:"globalResponseDelay" bson:"responseDelay"`
 }
 
 type MockService struct {

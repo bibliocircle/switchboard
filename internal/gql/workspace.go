@@ -44,15 +44,6 @@ var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-var WorkspaceMockServicesResolver = func(p graphql.ResolveParams) (interface{}, error) {
-	workspaceID := p.Source.(models.Workspace).ID
-	mss, err := db.GetWorkspaceMockServices(workspaceID)
-	if err != nil {
-		return make([]models.Workspace, 0), err
-	}
-	return mss, nil
-}
-
 var WorkspacesResolver = func(p graphql.ResolveParams) (interface{}, error) {
 	wss, err := db.GetWorkspaces()
 	if err != nil {
@@ -76,7 +67,7 @@ var UserWorkspaceResolver = func(p graphql.ResolveParams) (interface{}, error) {
 		currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
 		wss, err := db.GetUserWorkspaceByID(currentUser.ID, workspaceID)
 		if err != nil {
-			return make([]models.Workspace, 0), err
+			return nil, err
 		}
 		return *wss, nil
 	}

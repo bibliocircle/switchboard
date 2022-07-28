@@ -52,7 +52,6 @@ func CreateScenario(userId string, sc *models.CreateScenarioRequestBody) (*model
 		}
 	case common.PROXY_SCENARIO_TYPE:
 		newScenario.ProxyScenarioConfig = &models.ProxyScenarioConfig{
-			Name:          sc.ProxyScenarioConfig.Name,
 			UpstreamID:    sc.ProxyScenarioConfig.UpstreamID,
 			InjectHeaders: sc.ProxyScenarioConfig.InjectHeaders,
 		}

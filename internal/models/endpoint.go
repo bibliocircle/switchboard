@@ -8,7 +8,7 @@ type Endpoint struct {
 	Path          string    `json:"path" bson:"path,omitempty"`
 	Method        string    `json:"method" bson:"method,omitempty"`
 	Description   string    `json:"description" bson:"description,omitempty"`
-	ResponseDelay int64     `json:"responseDelay" bson:"responseDelay,omitempty"`
+	ResponseDelay uint16    `json:"responseDelay" bson:"responseDelay,omitempty"`
 	CreatedBy     string    `json:"createdBy" bson:"createdBy,omitempty"`
 	CreatedAt     time.Time `json:"createdAt" bson:"createdAt,omitempty"`
 	UpdatedAt     time.Time `json:"updatedAt" bson:"updatedAt,omitempty"`
@@ -19,5 +19,5 @@ type CreateEndpointRequestBody struct {
 	Path          string `json:"path" binding:"required,absolutePath"`
 	Method        string `json:"method" binding:"required"`
 	Description   string `json:"description" binding:"required"`
-	ResponseDelay int64  `json:"responseDelay"`
+	ResponseDelay uint16 `json:"responseDelay"`
 }

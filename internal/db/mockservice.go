@@ -17,7 +17,8 @@ func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (
 		Name: ms.Name,
 		Type: ms.Type,
 		Config: models.GlobalMockServiceConfig{
-			InjectHeaders: ms.Config.InjectHeaders,
+			InjectHeaders:       ms.Config.InjectHeaders,
+			GlobalResponseDelay: ms.Config.GlobalResponseDelay,
 		},
 		CreatedBy: userId,
 		CreatedAt: currentTime,
@@ -52,6 +53,30 @@ func GetMockServices() (*[]models.MockService, *common.DetailedError) {
 	}
 
 	cursor, errFind := mockServicesCol.Find(ctx, bson.D{}, findOpts)
+	if errFind != nil {
+		return &[]models.MockService{}, common.WrapAsDetailedError(errFind)
+	}
+	result := make([]models.MockService, 0)
+	err := cursor.All(ctx, &result)
+	if err != nil {
+		return nil, common.WrapAsDetailedError(err)
+	}
+	return &result, nil
+}
+
+func GetMockServicesByIds(ids []string) (*[]models.MockService, *common.DetailedError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	mockServicesCol := Database.Collection(MOCKSERVICES_COLLECTION)
+	findOpts := &options.FindOptions{
+		Sort: &map[string]int64{
+			"createdAt": -1,
+		},
+	}
+
+	cursor, errFind := mockServicesCol.Find(ctx, bson.D{
+		{Key: "id", Value: bson.D{{Key: "$in", Value: ids}}},
+	}, findOpts)
 	if errFind != nil {
 		return &[]models.MockService{}, common.WrapAsDetailedError(errFind)
 	}

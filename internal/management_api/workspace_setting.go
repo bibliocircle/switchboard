@@ -62,7 +62,7 @@ func ActivateMockServiceScenarioRoute(c *gin.Context) {
 		return
 	}
 
-	ok, updateErr := db.ActivateMockServiceScenario(workspaceId, mockServiceId, endpointId, scenarioId)
+	ok, updateErr := db.ActivateWsMockServiceScenario(workspaceId, mockServiceId, endpointId, scenarioId)
 	if updateErr != nil {
 		log.Errorln(fmt.Sprintf("could not activate scenario in workspace. [error code: %s] [description: %s]", updateErr.ErrorCode, updateErr.Description))
 		c.Writer.WriteHeader(http.StatusInternalServerError)
@@ -75,42 +75,6 @@ func ActivateMockServiceScenarioRoute(c *gin.Context) {
 	}
 
 	c.Writer.WriteHeader(http.StatusOK)
-}
-
-func UpdateWsMockServiceConfigRoute(c *gin.Context) {
-	var payload models.UpdateMockServiceConfigRequestBody
-	if bindErr := c.ShouldBindJSON(&payload); bindErr != nil {
-		c.JSON(http.StatusBadRequest, common.NewDetailedError(
-			common.ErrorUnparsablePayload,
-			bindErr.Error(),
-		))
-		return
-	}
-	currentUser := c.Value(common.REQ_USER_KEY).(*models.User)
-	workspaceId := c.Param("workspaceId")
-	mockServiceId := c.Param("mockServiceId")
-	endpointId := c.Param("endpointId")
-
-	isWsOwner, errPerm := db.IsWorkspaceOwner(currentUser.ID, workspaceId)
-	if errPerm != nil {
-		log.Errorln(fmt.Sprintf("could not check workspace ownership. [error code: %s] [description: %s]", errPerm.ErrorCode, errPerm.Description))
-		c.Writer.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if !isWsOwner {
-		c.Writer.WriteHeader(http.StatusForbidden)
-		return
-	}
-
-	updatedWss, updateErr := db.UpdateWsMockServiceConfig(workspaceId, mockServiceId, endpointId, &payload)
-	if updateErr == nil {
-		c.JSON(http.StatusOK, updatedWss)
-		return
-	}
-
-	log.Errorln(fmt.Sprintf("could not update workspace setting. [error code: %s] [description: %s]", updateErr.ErrorCode, updateErr.Description))
-	c.Writer.WriteHeader(http.StatusInternalServerError)
 }
 
 func GetWorkspaceSettingsRoute(c *gin.Context) {

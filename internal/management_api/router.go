@@ -43,7 +43,6 @@ func setupAuthenticatedRoutes(r *gin.Engine) {
 	r.GET("/workspaces", GetWorkspacesRoute)
 	r.GET("/user/workspaces", GetUserWorkspacesRoute)
 	r.GET("/workspace/:workspaceId/settings", GetWorkspaceSettingsRoute)
-	r.PUT("/workspace/:workspaceId/mockservice/:mockServiceId/endpoint/:endpointId/settings", UpdateWsMockServiceConfigRoute)
 	r.PUT("/workspace/:workspaceId/mockservice/:mockServiceId/endpoint/:endpointId/scenario/:scenarioId/activate", ActivateMockServiceScenarioRoute)
 	r.POST("/workspace/:workspaceId/mockservice/:mockServiceId/add", AddMockServiceToWorkspaceRoute)
 
