@@ -41,8 +41,8 @@ func CreateScenario(userId string, sc *models.CreateScenarioRequestBody) (*model
 		Type:       sc.Type,
 		IsDefault:  isDefaultScenario,
 		CreatedBy:  userId,
-		CreatedAt:  currentTime,
-		UpdatedAt:  currentTime,
+		CreatedAt:  &currentTime,
+		UpdatedAt:  &currentTime,
 	}
 	switch sc.Type {
 	case common.HTTP_SCENARIO_TYPE:

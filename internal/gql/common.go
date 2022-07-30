@@ -7,6 +7,18 @@ type HTTPHeader struct {
 	Value string ` json:"value"`
 }
 
+var HTTPHeaderGqlInputType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "HeaderInput",
+	Fields: graphql.InputObjectConfigFieldMap{
+		"name": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"value": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+	},
+})
+
 var HTTPHeaderGqlType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Header",
 	Fields: graphql.Fields{

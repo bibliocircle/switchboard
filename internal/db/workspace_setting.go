@@ -149,7 +149,7 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 	defer cancel()
 	wssCol := Database.Collection("workspace_settings")
 
-	result, err := wssCol.UpdateOne(ctx, bson.D{
+	_, err := wssCol.UpdateOne(ctx, bson.D{
 		{Key: "workspaceId", Value: workspaceID},
 		{Key: "mockServiceId", Value: mockServiceID},
 	}, bson.D{{
@@ -165,10 +165,6 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 
 	if err != nil {
 		return false, GetDbError(err)
-	}
-
-	if result.ModifiedCount == 0 {
-		return false, nil
 	}
 
 	return true, nil

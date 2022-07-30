@@ -2,12 +2,6 @@ package gql
 
 import "errors"
 
-const GqlDuplicate = "DUPLICATE"
-const GqlForbidden = "FORBIDDEN"
-const GqlInternalError = "INTERNAL_ERROR"
-const GqlNotFound = "NOT_FOUND"
-const GqlUnauthorised = "UNAUTHORISED"
-
 type GQLError struct {
 	error
 	extensions map[string]interface{}

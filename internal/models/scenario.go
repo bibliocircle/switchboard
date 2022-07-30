@@ -26,8 +26,8 @@ type Scenario struct {
 	ProxyScenarioConfig        *ProxyScenarioConfig        `json:"proxyScenarioConfig,omitempty" bson:"proxyScenarioConfig,omitempty"`
 	NetworkScenarioConfig      *NetworkScenarioConfig      `json:"networkScenarioConfig,omitempty" bson:"networkScenarioConfig,omitempty"`
 	CreatedBy                  string                      `json:"createdBy" bson:"createdBy,omitempty"`
-	CreatedAt                  time.Time                   `json:"createdAt" bson:"createdAt,omitempty"`
-	UpdatedAt                  time.Time                   `json:"updatedAt" bson:"updatedAt,omitempty"`
+	CreatedAt                  *time.Time                  `json:"createdAt" bson:"createdAt,omitempty"`
+	UpdatedAt                  *time.Time                  `json:"updatedAt" bson:"updatedAt,omitempty"`
 }
 
 type HTTPResponseScenarioRequestBody struct {

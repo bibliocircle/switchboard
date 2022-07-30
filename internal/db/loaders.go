@@ -7,4 +7,5 @@ const LoadersCtxKey = "loaders"
 type Loaders struct {
 	Scenarios *dataloader.Loader
 	Endpoints *dataloader.Loader
+	Users     *dataloader.Loader
 }

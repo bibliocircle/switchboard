@@ -1,13 +1,27 @@
 package gql
 
 import (
+	"fmt"
 	"switchboard/internal/common"
 	"switchboard/internal/db"
 	"switchboard/internal/models"
 
 	"github.com/graphql-go/graphql"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
+
+var WorkspaceGqlInputType = graphql.NewInputObject(graphql.InputObjectConfig{
+	Name: "WorkspaceInput",
+	Fields: graphql.InputObjectConfigFieldMap{
+		"name": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"expiresAt": &graphql.InputObjectFieldConfig{
+			Type: graphql.String,
+		},
+	},
+})
 
 var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Workspace",
@@ -32,7 +46,7 @@ var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 				users, err := db.GetUserByID(userId)
 				if err != nil {
 					logrus.Errorln(err)
-					return make([]models.User, 0), NewGqlError(GqlInternalError, "could not resolve createdBy field")
+					return make([]models.User, 0), NewGqlError(common.ErrorGeneric, "could not resolve createdBy field")
 				}
 				return users, nil
 			},
@@ -46,11 +60,30 @@ var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
+func CreateWorkspaceResolver(p graphql.ResolveParams) (interface{}, error) {
+	var input models.CreateWorkspaceRequestBody
+	mapstructure.Decode(p.Args["workspace"], &input)
+
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
+	createdWs, createErr := db.CreateWorkspace(currentUser.ID, &input)
+
+	switch {
+	case createErr == nil:
+		return createdWs, nil
+	case createErr.ErrorCode == common.ErrorInvalidInput:
+		return nil, NewGqlError(common.ErrorInvalidInput, "could not parse input")
+	case createErr.ErrorCode == common.ErrorDuplicateEntity:
+		return nil, NewGqlError(common.ErrorDuplicateEntity, "workspace already exists")
+	}
+
+	return nil, NewGqlError(common.ErrorGeneric, "could not create workspace")
+}
+
 func GetWorkspacesResolver(p graphql.ResolveParams) (interface{}, error) {
 	wss, err := db.GetWorkspaces()
 	if err != nil {
 		logrus.Errorln(err)
-		return make([]models.Workspace, 0), NewGqlError(GqlInternalError, "could not retrieve workspaces")
+		return make([]models.Workspace, 0), NewGqlError(common.ErrorGeneric, "could not retrieve workspaces")
 	}
 	return wss, nil
 }
@@ -60,7 +93,7 @@ func GetUserWorkspacesResolver(p graphql.ResolveParams) (interface{}, error) {
 	wss, err := db.GetUserWorkspaces(currentUser.ID)
 	if err != nil {
 		logrus.Errorln(err)
-		return make([]models.Workspace, 0), NewGqlError(GqlInternalError, "could not retrieve user workspaces")
+		return make([]models.Workspace, 0), NewGqlError(common.ErrorGeneric, "could not retrieve user workspaces")
 	}
 	return wss, nil
 }
@@ -76,4 +109,19 @@ func GetUserWorkspaceResolver(p graphql.ResolveParams) (interface{}, error) {
 		return *wss, nil
 	}
 	return nil, nil
+}
+
+func DeleteWorkspaceResolver(p graphql.ResolveParams) (interface{}, error) {
+	workspaceID := p.Args["workspaceId"].(string)
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
+	ok, err := db.DeleteWorkspace(currentUser.ID, workspaceID)
+	if err != nil {
+		logrus.Errorln(fmt.Sprintf("could not delete workspace %s. [error code: %s] [description: %s]", workspaceID, err.ErrorCode, err.Description))
+		return false, NewGqlError(common.ErrorGeneric, "could not delete workspace")
+	}
+	if !ok {
+		return false, NewGqlError(common.ErrorNotFound, "workspace not found")
+	}
+
+	return true, nil
 }

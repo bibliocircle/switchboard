@@ -24,8 +24,8 @@ func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*model
 		Description:   ep.Description,
 		ResponseDelay: ep.ResponseDelay,
 		CreatedBy:     userId,
-		CreatedAt:     currentTime,
-		UpdatedAt:     currentTime,
+		CreatedAt:     &currentTime,
+		UpdatedAt:     &currentTime,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

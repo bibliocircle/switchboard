@@ -23,34 +23,19 @@ func setupUnauthenticatedRoutes(r *gin.Engine) {
 	r.POST("/auth/login", LoginRoute)
 	r.POST("/auth/signup", SignUpRoute)
 	r.POST("/auth/logout", LogOutRoute)
-}
 
-func setupAuthenticatedRoutes(r *gin.Engine) {
-	r.POST("/endpoint", CreateEndpointRoute)
-	r.DELETE("/endpoint/:endpointId", DeleteEndpointRoute)
-
-	r.POST("/scenario", CreateScenarioRoute)
-
-	r.POST("/upstream", CreateUpstreamRoute)
-	r.DELETE("/upstream/:upstreamId", DeleteUpstreamRoute)
-
-	r.POST("/mockservice", CreateMockServiceRoute)
-	r.DELETE("/mockservice/:mockServiceId", DeleteMockServiceRoute)
-
-	r.POST("/workspace", CreateWorkspaceRoute)
-	r.DELETE("/workspace/:workspaceId", DeleteWorkspaceRoute)
-
-	// temporary endpoints to test random data generator
-	r.POST("/randomjson", func(c *gin.Context) {
-		jsonData, err := io.ReadAll(c.Request.Body)
+	r.POST("/randomdata", func(c *gin.Context) {
+		tmpl, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			c.Writer.WriteHeader(http.StatusInternalServerError)
 		}
-		data, fErr := common.GenFakeData(string(jsonData))
+		data, fErr := common.GenFakeData(string(tmpl))
 		if fErr != nil {
 			c.Writer.WriteHeader(http.StatusInternalServerError)
 		}
-		c.Header("Content-Type", "application/json")
+		if accept := c.GetHeader("Accept"); accept != "" {
+			c.Header("Content-Type", accept)
+		}
 		c.Writer.Write([]byte(data))
 	})
 }
@@ -65,13 +50,15 @@ func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
 		panic(err)
 	}
 
-	h := handler.New(&handler.Config{
+	gqlHandler := handler.New(&handler.Config{
 		Schema:   &schema,
 		Pretty:   true,
 		GraphiQL: true,
 	})
 
 	r := gin.New()
+
+	// This may not be needed with graphql endpoints
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		common.InitialiseValidator(v)
 	}
@@ -87,14 +74,15 @@ func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
 	r.Use(common.ParseAuthToken())
 	r.Use(common.RequireAuthentication())
 
-	setupAuthenticatedRoutes(r)
 	r.Any("/graphql", func(ctx *gin.Context) {
 		loaders := &db.Loaders{
 			Scenarios: dataloader.NewBatchedLoader(db.BatchLoadScenarios),
 			Endpoints: dataloader.NewBatchedLoader(db.BatchLoadEndpoints),
+			Users:     dataloader.NewBatchedLoader(db.BatchLoadUsers),
 		}
 		ctx.Set(db.LoadersCtxKey, loaders)
-		h.ServeHTTP(ctx.Writer, ctx.Request.WithContext(ctx))
+		gqlHandler.ServeHTTP(ctx.Writer, ctx.Request.WithContext(ctx))
 	})
+
 	return r
 }

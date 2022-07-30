@@ -21,8 +21,8 @@ func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (
 		Name:          upstream.Name,
 		URL:           upstream.URL,
 		CreatedBy:     userID,
-		CreatedAt:     currentTime,
-		UpdatedAt:     currentTime,
+		CreatedAt:     &currentTime,
+		UpdatedAt:     &currentTime,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

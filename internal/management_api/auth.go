@@ -115,7 +115,3 @@ func SignUpRoute(c *gin.Context) {
 func LogOutRoute(c *gin.Context) {
 	c.SetCookie(os.Getenv("AUTH_COOKIE_NAME"), "", -1, "/", os.Getenv("AUTH_COOKIE_DOMAIN"), false, false)
 }
-
-func ResetPassword(c *gin.Context) {
-	// TODO
-}

@@ -1,12 +1,29 @@
 package gql
 
 import (
+	"switchboard/internal/common"
 	"switchboard/internal/db"
 	"switchboard/internal/models"
 
 	"github.com/graphql-go/graphql"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
+
+var HTTPResponseScenarioConfigGqlInputType = graphql.NewInputObject(graphql.InputObjectConfig{
+	Name: "HTTPResponseScenarioConfigInput",
+	Fields: graphql.InputObjectConfigFieldMap{
+		"statusCode": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"responseBodyTemplate": &graphql.InputObjectFieldConfig{
+			Type: graphql.String,
+		},
+		"responseHeadersTemplate": &graphql.InputObjectFieldConfig{
+			Type: graphql.String,
+		},
+	},
+})
 
 var HTTPResponseScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "HTTPResponseScenarioConfig",
@@ -19,6 +36,18 @@ var HTTPResponseScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"responseHeadersTemplate": &graphql.Field{
 			Type: graphql.String,
+		},
+	},
+})
+
+var ProxyScenarioConfigGqlInputType = graphql.NewInputObject(graphql.InputObjectConfig{
+	Name: "ProxyScenarioConfigInput",
+	Fields: graphql.InputObjectConfigFieldMap{
+		"upstreamId": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"injectHeaders": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewList(HTTPHeaderGqlInputType),
 		},
 	},
 })
@@ -36,7 +65,7 @@ var ProxyScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 				upstream, err := db.GetUpstreamByID(upstreamID)
 				if err != nil {
 					logrus.Errorln(err)
-					return nil, NewGqlError(GqlInternalError, "could not retrieve upstream")
+					return nil, NewGqlError(common.ErrorGeneric, "could not retrieve upstream")
 				}
 				return *upstream, nil
 			},
@@ -58,11 +87,41 @@ var ProxyScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
+var NetworkScenarioConfigGqlInputType = graphql.NewInputObject(graphql.InputObjectConfig{
+	Name: "NetworkScenarioConfigInput",
+	Fields: graphql.InputObjectConfigFieldMap{
+		"type": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+	},
+})
+
 var NetworkScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "NetworkScenarioConfig",
 	Fields: graphql.Fields{
 		"type": &graphql.Field{
 			Type: graphql.String,
+		},
+	},
+})
+
+var ScenarioGqlInputType = graphql.NewInputObject(graphql.InputObjectConfig{
+	Name: "ScenarioInput",
+	Fields: graphql.InputObjectConfigFieldMap{
+		"endpointId": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"type": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"httpResponseScenarioConfig": &graphql.InputObjectFieldConfig{
+			Type: HTTPResponseScenarioConfigGqlInputType,
+		},
+		"proxyScenarioConfig": &graphql.InputObjectFieldConfig{
+			Type: ProxyScenarioConfigGqlInputType,
+		},
+		"networkScenarioConfig": &graphql.InputObjectFieldConfig{
+			Type: NetworkScenarioConfigGqlInputType,
 		},
 	},
 })
@@ -92,7 +151,7 @@ var ScenarioGqlType = graphql.NewObject(graphql.ObjectConfig{
 				users, err := db.GetUserByID(userId)
 				if err != nil {
 					logrus.Errorln(err)
-					return make([]models.User, 0), NewGqlError(GqlInternalError, "could not resolve createdBy field")
+					return make([]models.User, 0), NewGqlError(common.ErrorGeneric, "could not resolve createdBy field")
 				}
 				return users, nil
 			},
@@ -105,3 +164,20 @@ var ScenarioGqlType = graphql.NewObject(graphql.ObjectConfig{
 		},
 	},
 })
+
+func CreateScenarioResolver(p graphql.ResolveParams) (interface{}, error) {
+	var input models.CreateScenarioRequestBody
+	mapstructure.Decode(p.Args["scenario"], &input)
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
+
+	createdScenario, createErr := db.CreateScenario(currentUser.ID, &input)
+	if createErr == nil {
+		return createdScenario, nil
+	}
+
+	if createErr.ErrorCode == common.ErrorDuplicateEntity {
+		return nil, NewGqlError(common.ErrorDuplicateEntity, "duplicate scenario")
+	}
+
+	return nil, NewGqlError(common.ErrorGeneric, "generic error")
+}

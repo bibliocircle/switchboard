@@ -22,8 +22,8 @@ func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (
 			GlobalResponseDelay: ms.Config.GlobalResponseDelay,
 		},
 		CreatedBy: userId,
-		CreatedAt: currentTime,
-		UpdatedAt: currentTime,
+		CreatedAt: &currentTime,
+		UpdatedAt: &currentTime,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

@@ -1,6 +1,7 @@
 package gql
 
 import (
+	"switchboard/internal/common"
 	"switchboard/internal/db"
 	"switchboard/internal/models"
 
@@ -38,7 +39,7 @@ func GetUserResolver(p graphql.ResolveParams) (interface{}, error) {
 		user, err := db.GetUserByID(userId)
 		if err != nil {
 			logrus.Errorln(err)
-			return nil, NewGqlError(GqlInternalError, "could not retrieve user")
+			return nil, NewGqlError(common.ErrorGeneric, "could not retrieve user")
 		}
 		return user, nil
 	}
@@ -49,7 +50,7 @@ func GetUsersResolver(p graphql.ResolveParams) (interface{}, error) {
 	users, err := db.GetUsers()
 	if err != nil {
 		logrus.Errorln(err)
-		return make([]models.User, 0), NewGqlError(GqlInternalError, "could not retrieve users")
+		return make([]models.User, 0), NewGqlError(common.ErrorGeneric, "could not retrieve users")
 	}
 	return users, nil
 }

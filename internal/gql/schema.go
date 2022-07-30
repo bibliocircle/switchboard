@@ -80,6 +80,87 @@ var RootMutation = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "RootMutation",
 		Fields: graphql.Fields{
+			"createWorkspace": &graphql.Field{
+				Type: WorkspaceGqlType,
+				Args: graphql.FieldConfigArgument{
+					"workspace": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(WorkspaceGqlInputType),
+					},
+				},
+				Resolve: CreateWorkspaceResolver,
+			},
+			"deleteWorkspace": &graphql.Field{
+				Type: graphql.Boolean,
+				Args: graphql.FieldConfigArgument{
+					"workspaceId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: DeleteWorkspaceResolver,
+			},
+			"createEndpoint": &graphql.Field{
+				Type: EndpointGqlType,
+				Args: graphql.FieldConfigArgument{
+					"endpoint": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(EndpointGqlInputType),
+					},
+				},
+				Resolve: CreateEndpointResolver,
+			},
+			"deleteEndpoint": &graphql.Field{
+				Type: graphql.Boolean,
+				Args: graphql.FieldConfigArgument{
+					"endpointId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: DeleteEndpointResolver,
+			},
+			"createScenario": &graphql.Field{
+				Type: ScenarioGqlType,
+				Args: graphql.FieldConfigArgument{
+					"scenario": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(ScenarioConfigGqlType),
+					},
+				},
+				Resolve: CreateScenarioResolver,
+			},
+			"createUpstream": &graphql.Field{
+				Type: UpstreamGqlType,
+				Args: graphql.FieldConfigArgument{
+					"upstream": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(UpstreamGqlInputType),
+					},
+				},
+				Resolve: CreateUpstreamResolver,
+			},
+			"deleteUpstream": &graphql.Field{
+				Type: graphql.Boolean,
+				Args: graphql.FieldConfigArgument{
+					"upstreamId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: DeleteUpstreamResolver,
+			},
+			"createMockService": &graphql.Field{
+				Type: MockServiceGqlType,
+				Args: graphql.FieldConfigArgument{
+					"mockService": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(MockServiceGqlInputType),
+					},
+				},
+				Resolve: CreateMockServiceResolver,
+			},
+			"deleteMockService": &graphql.Field{
+				Type: graphql.Boolean,
+				Args: graphql.FieldConfigArgument{
+					"mockServiceId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: DeleteMockServiceResolver,
+			},
 			"activateMockServiceScenario": &graphql.Field{
 				Type: WorkspaceSettingGqlType,
 				Args: graphql.FieldConfigArgument{

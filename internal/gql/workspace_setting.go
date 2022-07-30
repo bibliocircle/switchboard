@@ -26,7 +26,7 @@ var ScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 					scenario, err := thunk()
 					if err != nil {
 						logrus.Errorln(err)
-						return nil, NewGqlError(GqlInternalError, "could not retrieve scenario")
+						return nil, NewGqlError(common.ErrorGeneric, "could not retrieve scenario")
 					}
 					return scenario.(*models.Scenario), nil
 				}, nil
@@ -71,7 +71,7 @@ var WorkspaceSettingGqlType = graphql.NewObject(graphql.ObjectConfig{
 				ws, err := db.GetUserWorkspaceByID(currentUser.ID, workspaceID)
 				if err != nil {
 					logrus.Errorln(err)
-					return nil, NewGqlError(GqlInternalError, "could not retrieve workspace")
+					return nil, NewGqlError(common.ErrorGeneric, "could not retrieve workspace")
 				}
 				return ws, nil
 			},
@@ -83,7 +83,7 @@ var WorkspaceSettingGqlType = graphql.NewObject(graphql.ObjectConfig{
 				ms, err := db.GetMockServiceByID(mockServiceID)
 				if err != nil {
 					logrus.Errorln(err)
-					return nil, NewGqlError(GqlInternalError, "could not retrieve mock service")
+					return nil, NewGqlError(common.ErrorGeneric, "could not retrieve mock service")
 				}
 				return *ms, nil
 			},
@@ -105,7 +105,7 @@ func GetEndpointResolver(p graphql.ResolveParams) (interface{}, error) {
 		endpoint, err := thunk()
 		if err != nil {
 			logrus.Errorln(err)
-			return nil, NewGqlError(GqlInternalError, "could not retrieve endpoint")
+			return nil, NewGqlError(common.ErrorGeneric, "could not retrieve endpoint")
 		}
 		return endpoint.(*models.Endpoint), nil
 	}, nil
@@ -116,7 +116,7 @@ func GetWorkspaceSettingsResolver(p graphql.ResolveParams) (interface{}, error) 
 	wss, err := db.GetWorkspaceSettings(workspaceID)
 	if err != nil {
 		logrus.Errorf("could not retrieve workspace settings for workspace ID %s : %s\n", workspaceID, err)
-		return make([]models.WorkspaceSetting, 0), NewGqlError(GqlInternalError, "could not retrieve workspace settings")
+		return make([]models.WorkspaceSetting, 0), NewGqlError(common.ErrorGeneric, "could not retrieve workspace settings")
 	}
 
 	return wss, nil
@@ -126,8 +126,8 @@ func GetWorkspaceMockServicesResolver(p graphql.ResolveParams) (interface{}, err
 	workspaceID := p.Source.(models.Workspace).ID
 	wss, errWs := db.GetWorkspaceSettings(workspaceID)
 	if errWs != nil {
-		if errWs.ErrorCode == common.ErrorNoResult {
-			return make([]models.MockService, 0), NewGqlError(GqlNotFound, "workspace settings not found!")
+		if errWs.ErrorCode == common.ErrorNotFound {
+			return make([]models.MockService, 0), NewGqlError(common.ErrorNotFound, "workspace settings not found!")
 		}
 		return make([]models.MockService, 0), errWs
 	}
@@ -151,10 +151,10 @@ func GetWorkspaceSettingResolver(p graphql.ResolveParams) (interface{}, error) {
 	if err == nil {
 		return wss, nil
 	}
-	if err.ErrorCode == common.ErrorNoResult {
-		return nil, NewGqlError(GqlNotFound, "workspace not found or mock service not found in the workspace")
+	if err.ErrorCode == common.ErrorNotFound {
+		return nil, NewGqlError(common.ErrorNotFound, "workspace not found or mock service not found in the workspace")
 	}
-	return nil, NewGqlError(GqlInternalError, "could not retrieve workspace settings")
+	return nil, NewGqlError(common.ErrorGeneric, "could not retrieve workspace settings")
 }
 
 func ActivateMockServiceScenarioResolver(p graphql.ResolveParams) (interface{}, error) {
@@ -170,7 +170,7 @@ func ActivateMockServiceScenarioResolver(p graphql.ResolveParams) (interface{}, 
 		scenarioID,
 	)
 	if errAct != nil {
-		return nil, NewGqlError(GqlInternalError, "could not activate mock service scenario")
+		return nil, NewGqlError(common.ErrorGeneric, "could not activate mock service scenario")
 	}
 	if ok {
 		wss, err := db.GetWorkspaceSetting(workspaceID, mockServiceID)
@@ -190,11 +190,11 @@ func AddMockServiceToWorkspaceResolver(p graphql.ResolveParams) (interface{}, er
 	isWsOwner, errPerm := db.IsWorkspaceOwner(currentUser.ID, workspaceID)
 	if errPerm != nil {
 		logrus.Errorln("could not check workspace permissions", errPerm)
-		return nil, NewGqlError(GqlInternalError, "could not check workspace permissions")
+		return nil, NewGqlError(common.ErrorGeneric, "could not check workspace permissions")
 	}
 
 	if !isWsOwner {
-		return nil, NewGqlError(GqlForbidden, "workspace doesn't exist or the current user doesn't have permissions to access the workspace")
+		return nil, NewGqlError(common.ErrorForbidden, "workspace doesn't exist or the current user doesn't have permissions to access the workspace")
 	}
 
 	err := db.AddMockServiceToWorkspace(currentUser.ID, workspaceID, mockServiceID)
@@ -202,14 +202,14 @@ func AddMockServiceToWorkspaceResolver(p graphql.ResolveParams) (interface{}, er
 		ws, errWs := db.GetUserWorkspaceByID(currentUser.ID, workspaceID)
 		if errWs != nil {
 			logrus.Errorln("could not retrieve workspace", errWs)
-			return nil, NewGqlError(GqlInternalError, "could not retrieve workspace")
+			return nil, NewGqlError(common.ErrorGeneric, "could not retrieve workspace")
 		}
 		return *ws, nil
 	}
 
 	if err.ErrorCode == common.ErrorDuplicateEntity {
-		return nil, NewGqlError(GqlDuplicate, "mock service already added this workspace")
+		return nil, NewGqlError(common.ErrorDuplicateEntity, "mock service already added this workspace")
 	}
 
-	return nil, NewGqlError(GqlInternalError, "could not add mock service to workspace")
+	return nil, NewGqlError(common.ErrorGeneric, "could not add mock service to workspace")
 }

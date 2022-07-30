@@ -14,13 +14,24 @@ import (
 func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*models.Workspace, *common.DetailedError) {
 	wsId := common.GetShortId()
 	currentTime := time.Now()
+	var expiresAt *time.Time
+
+	if ws.ExpiresAt != "" {
+		var errParse error
+		exp, errParse := time.Parse(time.RFC3339, ws.ExpiresAt)
+		expiresAt = &exp
+		if errParse != nil {
+			return nil, common.NewDetailedError(common.ErrorInvalidInput, "could not parse expiresAt value")
+		}
+	}
+
 	newWs := &models.Workspace{
 		ID:        wsId,
 		Name:      ws.Name,
-		ExpiresAt: ws.ExpiresAt,
+		ExpiresAt: expiresAt,
 		CreatedBy: userId,
-		CreatedAt: currentTime,
-		UpdatedAt: currentTime,
+		CreatedAt: &currentTime,
+		UpdatedAt: &currentTime,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

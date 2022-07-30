@@ -1,13 +1,18 @@
 package common
 
-const ErrorGeneric = "GENERIC_ERROR"
-const ErrorDuplicateEntity = "DUPLICATE_ENTITY"
-const ErrorNoResult = "NO_RESULT"
-const ErrorPasswordMismatch = "PASSWORD_MISMATCH"
-const ErrorPayloadMissingRequiredFields = "PAYLOAD_MISSING_REQUIRED_FIELDS"
-const ErrorUnparsablePayload = "UNPARSABLE_PAYLOAD"
-const ErrorUserExists = "USER_ALREADY_EXISTS"
-const ErrAuthTokenExpired = "AUTH_TOKEN_EXPIRED"
+const (
+	ErrorGeneric                      = "GENERIC_ERROR"
+	ErrorInvalidInput                 = "INVALID_INPUT"
+	ErrorDuplicateEntity              = "DUPLICATE_ENTITY"
+	ErrorNotFound                     = "NOT_FOUND"
+	ErrorForbidden                    = "FORBIDDEN"
+	ErrorUnauthorised                 = "UNAUTHORISED"
+	ErrorPasswordMismatch             = "PASSWORD_MISMATCH"
+	ErrorPayloadMissingRequiredFields = "PAYLOAD_MISSING_REQUIRED_FIELDS"
+	ErrorUnparsablePayload            = "UNPARSABLE_PAYLOAD"
+	ErrorUserExists                   = "USER_ALREADY_EXISTS"
+	ErrorAuthTokenExpired             = "AUTH_TOKEN_EXPIRED"
+)
 
 type DetailedError struct {
 	ErrorCode   string `json:"errorCode"`
