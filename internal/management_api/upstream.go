@@ -35,16 +35,6 @@ func CreateUpstreamRoute(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusInternalServerError)
 }
 
-func GetUpstreamsByMockServiceIdRoute(c *gin.Context) {
-	upstreams, err := db.GetUpstreams(c.Param("mockServiceId"))
-	if err != nil {
-		log.Errorln(fmt.Sprintf("could not retrieve upstreams. [error code: %s] [description: %s]", err.ErrorCode, err.Description))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.ErrorCode})
-		return
-	}
-	c.JSON(http.StatusOK, upstreams)
-}
-
 func DeleteUpstreamRoute(c *gin.Context) {
 	upstreamID := c.Param("upstreamId")
 	currentUser := c.Value(common.REQ_USER_KEY).(*models.User)

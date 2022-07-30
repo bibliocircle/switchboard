@@ -4,16 +4,15 @@ import (
 	"context"
 	"switchboard/internal/common"
 	"switchboard/internal/models"
+	"switchboard/internal/util"
 	"time"
 
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (*models.Upstream, *common.DetailedError) {
-	eId, _ := uuid.NewRandom()
-	upstreamId := eId.String()
+	upstreamId := util.UUIDv4()
 	currentTime := time.Now()
 	newUpstream := &models.Upstream{
 		ID:            upstreamId,

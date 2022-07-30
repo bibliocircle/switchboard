@@ -19,7 +19,7 @@ var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"mockServices": &graphql.Field{
 			Type:    graphql.NewList(MockServiceGqlType),
-			Resolve: WorkspaceMockServicesResolver,
+			Resolve: GetWorkspaceMockServicesResolver,
 		},
 		"expiresAt": &graphql.Field{
 			Type: graphql.String,
@@ -44,7 +44,7 @@ var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-var WorkspacesResolver = func(p graphql.ResolveParams) (interface{}, error) {
+func GetWorkspacesResolver(p graphql.ResolveParams) (interface{}, error) {
 	wss, err := db.GetWorkspaces()
 	if err != nil {
 		return make([]models.Workspace, 0), err
@@ -52,7 +52,7 @@ var WorkspacesResolver = func(p graphql.ResolveParams) (interface{}, error) {
 	return wss, nil
 }
 
-var UserWorkspacesResolver = func(p graphql.ResolveParams) (interface{}, error) {
+func GetUserWorkspacesResolver(p graphql.ResolveParams) (interface{}, error) {
 	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
 	wss, err := db.GetUserWorkspaces(currentUser.ID)
 	if err != nil {
@@ -61,7 +61,7 @@ var UserWorkspacesResolver = func(p graphql.ResolveParams) (interface{}, error) 
 	return wss, nil
 }
 
-var UserWorkspaceResolver = func(p graphql.ResolveParams) (interface{}, error) {
+func GetUserWorkspaceResolver(p graphql.ResolveParams) (interface{}, error) {
 	workspaceID, ok := p.Args["workspaceId"].(string)
 	if ok {
 		currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)

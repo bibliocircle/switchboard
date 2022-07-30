@@ -5,28 +5,24 @@ import (
 	"fmt"
 	"switchboard/internal/common"
 	"switchboard/internal/models"
+	"switchboard/internal/util"
 	"time"
 
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedError) {
-	userId, err := uuid.NewRandom()
-	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
-	}
-
 	hashedPassword, err := common.CreateHash(user.Password)
 	if err != nil {
 		return nil, common.WrapAsDetailedError(err)
 	}
 
 	currentTime := time.Now()
+	userId := util.UUIDv4()
 	newUser := &models.User{
-		ID:        userId.String(),
+		ID:        userId,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Email:     user.Email,
@@ -44,7 +40,7 @@ func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedE
 
 	var createdUser models.User
 	findError := userCollection.FindOne(ctx, bson.D{{
-		Key: "id", Value: userId.String(),
+		Key: "id", Value: userId,
 	}}).Decode(&createdUser)
 	if findError != nil {
 		return nil, common.WrapAsDetailedError(fmt.Errorf("could not retrieve created document %s", userId))

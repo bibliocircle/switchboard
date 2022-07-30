@@ -4,6 +4,7 @@ import (
 	"context"
 	"switchboard/internal/common"
 	"switchboard/internal/models"
+	"switchboard/internal/util"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,12 +33,14 @@ func AddMockServiceToWorkspace(userID, workspaceID, mockServiceID string) *commo
 
 		for _, s := range scenarios {
 			sc = append(sc, models.ScenarioConfig{
+				ID:         util.UUIDv4(),
 				ScenarioID: s.ID,
 				IsActive:   s.IsDefault,
 			})
 		}
 
 		endpointConfigs = append(endpointConfigs, models.EndpointConfig{
+			ID:              util.UUIDv4(),
 			EndpointID:      ep.ID,
 			ScenarioConfigs: sc,
 			ResponseDelay:   ep.ResponseDelay,
@@ -49,6 +52,7 @@ func AddMockServiceToWorkspace(userID, workspaceID, mockServiceID string) *commo
 	wssCol := Database.Collection(WORKSPACE_SETTINGS_COLLECTION)
 
 	_, insertErr := wssCol.InsertOne(ctx, models.WorkspaceSetting{
+		ID:              util.UUIDv4(),
 		WorkspaceID:     workspaceID,
 		MockServiceID:   mockServiceID,
 		Config:          mockService.Config,
@@ -97,7 +101,7 @@ func GetWorkspaceSetting(workspaceID, mockServiceID string) (*models.WorkspaceSe
 	}).Decode(&wss)
 
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return &wss, nil
 }

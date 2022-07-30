@@ -4,9 +4,9 @@ import (
 	"context"
 	"switchboard/internal/common"
 	"switchboard/internal/models"
+	"switchboard/internal/util"
 	"time"
 
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -25,8 +25,7 @@ func CountScenarios(endpointID string) (int64, *common.DetailedError) {
 }
 
 func CreateScenario(userId string, sc *models.CreateScenarioRequestBody) (*models.Scenario, *common.DetailedError) {
-	eId, _ := uuid.NewRandom()
-	scenarioId := eId.String()
+	scenarioId := util.UUIDv4()
 	currentTime := time.Now()
 	isDefaultScenario := false
 	count, err := CountScenarios(sc.EndpointId)

@@ -5,15 +5,14 @@ import (
 	"strings"
 	"switchboard/internal/common"
 	"switchboard/internal/models"
+	"switchboard/internal/util"
 	"time"
 
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*models.Endpoint, *common.DetailedError) {
-	eId, _ := uuid.NewRandom()
-	endpointId := eId.String()
+	endpointId := util.UUIDv4()
 	currentTime := time.Now()
 	newEndpoint := &models.Endpoint{
 		ID:            endpointId,

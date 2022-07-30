@@ -31,7 +31,7 @@ var UserGqlType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-var UserResolver = func(p graphql.ResolveParams) (interface{}, error) {
+func GetUserResolver(p graphql.ResolveParams) (interface{}, error) {
 	userId, ok := p.Args["id"].(string)
 	if ok {
 		user, err := db.GetUserByID(userId)
@@ -43,7 +43,7 @@ var UserResolver = func(p graphql.ResolveParams) (interface{}, error) {
 	return nil, nil
 }
 
-var UsersResolver = func(p graphql.ResolveParams) (interface{}, error) {
+func GetUsersResolver(p graphql.ResolveParams) (interface{}, error) {
 	users, err := db.GetUsers()
 	if err != nil {
 		return make([]models.User, 0), err

@@ -2,13 +2,13 @@ package gql
 
 import "github.com/graphql-go/graphql"
 
-type HeaderConfig struct {
+type HTTPHeader struct {
 	Name  string `json:"name"`
 	Value string ` json:"value"`
 }
 
-var HeaderConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
-	Name: "KeyValuePair",
+var HTTPHeaderGqlType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "Header",
 	Fields: graphql.Fields{
 		"name": &graphql.Field{
 			Type: graphql.String,

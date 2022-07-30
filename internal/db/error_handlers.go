@@ -9,12 +9,15 @@ import (
 
 func GetDbError(err error) *common.DetailedError {
 	var we mongo.WriteException
-	if e.As(err, &we) {
+	switch {
+	case e.As(err, &we):
 		for _, writeErr := range we.WriteErrors {
 			if writeErr.Code == 11000 {
 				return common.NewDetailedError(common.ErrorDuplicateEntity, "duplicate document exists")
 			}
 		}
+	case err.Error() == mongo.ErrNoDocuments.Error():
+		return common.NewDetailedError(common.ErrorNoResult, "no result")
 	}
 	return common.WrapAsDetailedError(err)
 }

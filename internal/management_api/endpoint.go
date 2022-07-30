@@ -35,16 +35,6 @@ func CreateEndpointRoute(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusInternalServerError)
 }
 
-func GetEndpointsByMockServiceIdRoute(c *gin.Context) {
-	endpoints, err := db.GetEndpoints(c.Param("mockServiceId"))
-	if err != nil {
-		log.Errorln(fmt.Sprintf("could not retrieve endpoints. [error code: %s] [description: %s]", err.ErrorCode, err.Description))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.ErrorCode})
-		return
-	}
-	c.JSON(http.StatusOK, endpoints)
-}
-
 func DeleteEndpointRoute(c *gin.Context) {
 	endpointID := c.Param("endpointId")
 	currentUser := c.Value(common.REQ_USER_KEY).(*models.User)

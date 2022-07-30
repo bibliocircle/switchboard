@@ -40,12 +40,12 @@ var ProxyScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		"injectHeaders": &graphql.Field{
-			Type: graphql.NewList(HeaderConfigGqlType),
+			Type: graphql.NewList(HTTPHeaderGqlType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				headers := make([]HeaderConfig, 0)
+				headers := make([]HTTPHeader, 0)
 				injectHeaders := p.Source.(*models.ProxyScenarioConfig).InjectHeaders
 				for k, v := range injectHeaders {
-					headers = append(headers, HeaderConfig{
+					headers = append(headers, HTTPHeader{
 						Name:  k,
 						Value: v,
 					})

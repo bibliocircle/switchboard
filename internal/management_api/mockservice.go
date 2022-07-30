@@ -35,16 +35,6 @@ func CreateMockServiceRoute(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusInternalServerError)
 }
 
-func GetMockServicesRoute(c *gin.Context) {
-	mockServices, err := db.GetMockServices()
-	if err != nil {
-		log.Errorln(fmt.Sprintf("could not retrieve mock services. [error code: %s] [description: %s]", err.ErrorCode, err.Description))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.ErrorCode})
-		return
-	}
-	c.JSON(http.StatusOK, mockServices)
-}
-
 func DeleteMockServiceRoute(c *gin.Context) {
 	mockServiceID := c.Param("mockServiceId")
 	currentUser := c.Value(common.REQ_USER_KEY).(*models.User)

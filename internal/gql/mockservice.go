@@ -11,12 +11,12 @@ var GlobalMockServiceConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "GlobalMockServiceConfig",
 	Fields: graphql.Fields{
 		"injectHeaders": &graphql.Field{
-			Type: graphql.NewList(HeaderConfigGqlType),
+			Type: graphql.NewList(HTTPHeaderGqlType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				headers := make([]HeaderConfig, 0)
+				headers := make([]HTTPHeader, 0)
 				injectHeaders := p.Source.(models.GlobalMockServiceConfig).InjectHeaders
 				for k, v := range injectHeaders {
-					headers = append(headers, HeaderConfig{
+					headers = append(headers, HTTPHeader{
 						Name:  k,
 						Value: v,
 					})
@@ -87,7 +87,7 @@ var MockServiceGqlType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-var MockServicesResolver = func(p graphql.ResolveParams) (interface{}, error) {
+func GetMockServicesResolver(p graphql.ResolveParams) (interface{}, error) {
 	svcs, err := db.GetMockServices()
 	if err != nil {
 		return make([]models.MockService, 0), err
@@ -95,7 +95,7 @@ var MockServicesResolver = func(p graphql.ResolveParams) (interface{}, error) {
 	return svcs, nil
 }
 
-var MockServiceResolver = func(p graphql.ResolveParams) (interface{}, error) {
+func GetMockServiceResolver(p graphql.ResolveParams) (interface{}, error) {
 	id, ok := p.Args["id"].(string)
 	if ok {
 		mockService, err := db.GetMockServiceByID(id)

@@ -34,17 +34,9 @@ func setupAuthenticatedRoutes(r *gin.Engine) {
 
 	r.POST("/mockservice", CreateMockServiceRoute)
 	r.DELETE("/mockservice/:mockServiceId", DeleteMockServiceRoute)
-	r.GET("/mockservices", GetMockServicesRoute)
-	r.GET("/mockservice/:mockServiceId/upstreams", GetUpstreamsByMockServiceIdRoute)
-	r.GET("/mockservice/:mockServiceId/endpoints", GetEndpointsByMockServiceIdRoute)
 
 	r.POST("/workspace", CreateWorkspaceRoute)
 	r.DELETE("/workspace/:workspaceId", DeleteWorkspaceRoute)
-	r.GET("/workspaces", GetWorkspacesRoute)
-	r.GET("/user/workspaces", GetUserWorkspacesRoute)
-	r.GET("/workspace/:workspaceId/settings", GetWorkspaceSettingsRoute)
-	r.PUT("/workspace/:workspaceId/mockservice/:mockServiceId/endpoint/:endpointId/scenario/:scenarioId/activate", ActivateMockServiceScenarioRoute)
-	r.POST("/workspace/:workspaceId/mockservice/:mockServiceId/add", AddMockServiceToWorkspaceRoute)
 
 	// temporary endpoints to test random data generator
 	r.POST("/randomjson", func(c *gin.Context) {
@@ -62,8 +54,10 @@ func setupAuthenticatedRoutes(r *gin.Engine) {
 }
 
 func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
-	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: gql.GqlSchema}
-	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}
+	schemaConfig := graphql.SchemaConfig{
+		Query:    gql.RootQuery,
+		Mutation: gql.RootMutation,
+	}
 	schema, err := graphql.NewSchema(schemaConfig)
 	if err != nil {
 		panic(err)

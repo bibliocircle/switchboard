@@ -35,27 +35,6 @@ func CreateWorkspaceRoute(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusInternalServerError)
 }
 
-func GetWorkspacesRoute(c *gin.Context) {
-	ws, err := db.GetWorkspaces()
-	if err != nil {
-		log.Errorln(fmt.Sprintf("could not retrieve workspaces. [error code: %s] [description: %s]", err.ErrorCode, err.Description))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.ErrorCode})
-		return
-	}
-	c.JSON(http.StatusOK, ws)
-}
-
-func GetUserWorkspacesRoute(c *gin.Context) {
-	currentUser := c.Value(common.REQ_USER_KEY).(*models.User)
-	ws, err := db.GetUserWorkspaces(currentUser.ID)
-	if err != nil {
-		log.Errorln(fmt.Sprintf("could not retrieve user workspaces. [error code: %s] [description: %s]", err.ErrorCode, err.Description))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.ErrorCode})
-		return
-	}
-	c.JSON(http.StatusOK, ws)
-}
-
 func DeleteWorkspaceRoute(c *gin.Context) {
 	workspaceID := c.Param("workspaceId")
 	currentUser := c.Value(common.REQ_USER_KEY).(*models.User)
