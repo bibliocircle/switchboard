@@ -5,6 +5,7 @@ import (
 	"switchboard/internal/models"
 
 	"github.com/graphql-go/graphql"
+	"github.com/sirupsen/logrus"
 )
 
 var GlobalMockServiceConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
@@ -51,7 +52,8 @@ var MockServiceGqlType = graphql.NewObject(graphql.ObjectConfig{
 				mockServiceID := p.Source.(models.MockService).ID
 				upstreams, err := db.GetUpstreams(mockServiceID)
 				if err != nil {
-					return make([]models.Upstream, 0), err
+					logrus.Errorln(err)
+					return make([]models.Upstream, 0), NewGqlError(GqlInternalError, "could not retrieve upstreams")
 				}
 				return upstreams, nil
 			},
@@ -62,7 +64,8 @@ var MockServiceGqlType = graphql.NewObject(graphql.ObjectConfig{
 				mockServiceID := p.Source.(models.MockService).ID
 				endpoints, err := db.GetEndpoints(mockServiceID)
 				if err != nil {
-					return make([]models.Endpoint, 0), err
+					logrus.Errorln(err)
+					return make([]models.Endpoint, 0), NewGqlError(GqlInternalError, "could not retrieve endpoints")
 				}
 				return endpoints, nil
 			},
@@ -73,7 +76,8 @@ var MockServiceGqlType = graphql.NewObject(graphql.ObjectConfig{
 				userId := p.Source.(models.MockService).CreatedBy
 				users, err := db.GetUserByID(userId)
 				if err != nil {
-					return make([]models.User, 0), err
+					logrus.Errorln(err)
+					return make([]models.User, 0), NewGqlError(GqlInternalError, "could not resolve createdBy field")
 				}
 				return users, nil
 			},
@@ -90,7 +94,8 @@ var MockServiceGqlType = graphql.NewObject(graphql.ObjectConfig{
 func GetMockServicesResolver(p graphql.ResolveParams) (interface{}, error) {
 	svcs, err := db.GetMockServices()
 	if err != nil {
-		return make([]models.MockService, 0), err
+		logrus.Errorln(err)
+		return make([]models.MockService, 0), NewGqlError(GqlInternalError, "could not retrieve mock services")
 	}
 	return svcs, nil
 }
@@ -100,7 +105,7 @@ func GetMockServiceResolver(p graphql.ResolveParams) (interface{}, error) {
 	if ok {
 		mockService, err := db.GetMockServiceByID(id)
 		if err != nil {
-			return nil, err
+			return nil, NewGqlError(GqlInternalError, "could not retrieve mock service")
 		}
 		return *mockService, nil
 	}

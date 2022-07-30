@@ -5,6 +5,7 @@ import (
 	"switchboard/internal/models"
 
 	"github.com/graphql-go/graphql"
+	"github.com/sirupsen/logrus"
 )
 
 var EndpointGqlType = graphql.NewObject(graphql.ObjectConfig{
@@ -31,7 +32,8 @@ var EndpointGqlType = graphql.NewObject(graphql.ObjectConfig{
 				endpointID := p.Source.(models.Endpoint).ID
 				scenarios, err := db.GetScenarios(endpointID)
 				if err != nil {
-					return make([]models.Scenario, 0), err
+					logrus.Errorln(err)
+					return make([]models.Scenario, 0), NewGqlError(GqlInternalError, "could not retrieve scenarios")
 				}
 				return scenarios, nil
 			},
@@ -42,7 +44,8 @@ var EndpointGqlType = graphql.NewObject(graphql.ObjectConfig{
 				userId := p.Source.(models.Endpoint).CreatedBy
 				users, err := db.GetUserByID(userId)
 				if err != nil {
-					return make([]models.User, 0), err
+					logrus.Errorln(err)
+					return make([]models.User, 0), NewGqlError(GqlInternalError, "could not resolve createdBy field")
 				}
 				return users, nil
 			},

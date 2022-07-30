@@ -16,8 +16,6 @@ func GetDbError(err error) *common.DetailedError {
 				return common.NewDetailedError(common.ErrorDuplicateEntity, "duplicate document exists")
 			}
 		}
-	case err.Error() == mongo.ErrNoDocuments.Error():
-		return common.NewDetailedError(common.ErrorNoResult, "no result")
 	}
 	return common.WrapAsDetailedError(err)
 }

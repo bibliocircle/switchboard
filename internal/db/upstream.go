@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -36,7 +37,10 @@ func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (
 		Value: upstreamId,
 	}}).Decode(&createdUpstream)
 	if findErr != nil {
-		return nil, common.WrapAsDetailedError(findErr)
+		if findErr == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(findErr)
 	}
 	return &createdUpstream, nil
 }
@@ -56,12 +60,12 @@ func GetUpstreams(mockServiceID string) ([]models.Upstream, *common.DetailedErro
 
 	cursor, errFind := upstreamsCol.Find(ctx, dbQuery, findOpts)
 	if errFind != nil {
-		return []models.Upstream{}, common.WrapAsDetailedError(errFind)
+		return []models.Upstream{}, GetDbError(errFind)
 	}
 	result := make([]models.Upstream, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return result, nil
 }
@@ -76,7 +80,10 @@ func GetUpstreamByID(ID string) (*models.Upstream, *common.DetailedError) {
 		Value: ID,
 	}}).Decode(&upstream)
 	if findErr != nil {
-		return nil, common.WrapAsDetailedError(findErr)
+		if findErr == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(findErr)
 	}
 	return &upstream, nil
 }
@@ -90,7 +97,7 @@ func DeleteUpstream(userID, upstreamID string) (bool, *common.DetailedError) {
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, common.WrapAsDetailedError(errDel)
+		return false, GetDbError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

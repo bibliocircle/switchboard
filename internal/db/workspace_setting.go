@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -28,7 +29,7 @@ func AddMockServiceToWorkspace(userID, workspaceID, mockServiceID string) *commo
 		sc := make([]models.ScenarioConfig, 0)
 		scenarios, errSc := GetScenarios(ep.ID)
 		if errSc != nil {
-			return common.WrapAsDetailedError(errSc)
+			return GetDbError(errSc)
 		}
 
 		for _, s := range scenarios {
@@ -79,12 +80,12 @@ func GetWorkspaceSettings(workspaceID string) (*[]models.WorkspaceSetting, *comm
 		{Key: "workspaceId", Value: workspaceID},
 	}, findOpts)
 	if errFind != nil {
-		return nil, common.WrapAsDetailedError(errFind)
+		return nil, GetDbError(errFind)
 	}
 	result := make([]models.WorkspaceSetting, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return &result, nil
 }
@@ -101,6 +102,9 @@ func GetWorkspaceSetting(workspaceID, mockServiceID string) (*models.WorkspaceSe
 	}).Decode(&wss)
 
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
 		return nil, GetDbError(err)
 	}
 	return &wss, nil
@@ -126,12 +130,14 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 				newScenarioConfigs[scenarioConfigIndex] = sc
 			}
 			newEndpointConfigs[endpointConfigIndex] = models.EndpointConfig{
+				ID:              e.ID,
 				EndpointID:      e.EndpointID,
 				ScenarioConfigs: newScenarioConfigs,
 				ResponseDelay:   e.ResponseDelay,
 			}
 		} else {
 			newEndpointConfigs[endpointConfigIndex] = models.EndpointConfig{
+				ID:              e.ID,
 				EndpointID:      e.EndpointID,
 				ScenarioConfigs: e.ScenarioConfigs,
 				ResponseDelay:   e.ResponseDelay,
@@ -149,6 +155,7 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 	}, bson.D{{
 		Key: "$set",
 		Value: models.WorkspaceSetting{
+			ID:              wss.ID,
 			WorkspaceID:     wss.WorkspaceID,
 			MockServiceID:   wss.MockServiceID,
 			Config:          wss.Config,
@@ -157,7 +164,7 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 	}})
 
 	if err != nil {
-		return false, common.WrapAsDetailedError(err)
+		return false, GetDbError(err)
 	}
 
 	if result.ModifiedCount == 0 {

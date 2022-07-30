@@ -5,6 +5,7 @@ import (
 	"switchboard/internal/models"
 
 	"github.com/graphql-go/graphql"
+	"github.com/sirupsen/logrus"
 )
 
 var UpstreamGqlType = graphql.NewObject(graphql.ObjectConfig{
@@ -25,7 +26,8 @@ var UpstreamGqlType = graphql.NewObject(graphql.ObjectConfig{
 				userId := p.Source.(models.Upstream).CreatedBy
 				users, err := db.GetUserByID(userId)
 				if err != nil {
-					return make([]models.User, 0), err
+					logrus.Errorln(err)
+					return make([]models.User, 0), NewGqlError(GqlInternalError, "could not resolve createdBy field")
 				}
 				return users, nil
 			},

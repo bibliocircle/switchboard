@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -34,7 +35,10 @@ func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*mod
 		Value: wsId,
 	}}).Decode(&createdWs)
 	if findErr != nil {
-		return nil, common.WrapAsDetailedError(findErr)
+		if findErr == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(findErr)
 	}
 	return &createdWs, nil
 }
@@ -51,12 +55,12 @@ func FindWorkspaces(filter *bson.D) (*[]models.Workspace, *common.DetailedError)
 
 	cursor, errFind := wsCol.Find(ctx, filter, findOpts)
 	if errFind != nil {
-		return &[]models.Workspace{}, common.WrapAsDetailedError(errFind)
+		return &[]models.Workspace{}, GetDbError(errFind)
 	}
 	result := make([]models.Workspace, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return &result, nil
 }
@@ -87,7 +91,10 @@ func GetUserWorkspaceByID(userID, workspaceID string) (*models.Workspace, *commo
 		},
 	}).Decode(&ws)
 	if findErr != nil {
-		return nil, common.WrapAsDetailedError(findErr)
+		if findErr == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(findErr)
 	}
 	return &ws, nil
 }
@@ -101,7 +108,7 @@ func IsWorkspaceOwner(userId, workspaceId string) (bool, *common.DetailedError) 
 		{Key: "createdBy", Value: userId},
 	})
 	if err != nil {
-		return false, common.WrapAsDetailedError(err)
+		return false, GetDbError(err)
 	}
 	return count > 0, nil
 }
@@ -115,7 +122,7 @@ func DeleteWorkspace(userID, wsId string) (bool, *common.DetailedError) {
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, common.WrapAsDetailedError(errDel)
+		return false, GetDbError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func activateHTTPResponseScenario(cfg *models.HTTPResponseScenarioConfig, ctx *gin.Context) {
@@ -57,13 +56,14 @@ func CreateRoute(mockServiceID, endpointID string) gin.HandlerFunc {
 
 		wss, wsErr := db.GetWorkspaceSetting(wsID, msID)
 		if wsErr != nil {
-			if wsErr.Error() == mongo.ErrNoDocuments.Error() {
-				c.JSON(http.StatusUnprocessableEntity, gin.H{
-					"error": fmt.Sprintf("mock service '%s' is not enabled on this workspace", msID),
-				})
-				return
-			}
 			c.Writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if wss == nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{
+				"error": fmt.Sprintf("mock service '%s' is not enabled on this workspace", msID),
+			})
 			return
 		}
 
@@ -88,13 +88,14 @@ func CreateRoute(mockServiceID, endpointID string) gin.HandlerFunc {
 
 		sc, scErr := db.GetScenarioByID(activeScenarioId)
 		if scErr != nil {
-			if scErr.Error() == mongo.ErrNoDocuments.Error() {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "active scenario could not be found for the endpoint on this workspace",
-				})
-				return
-			}
 			c.Writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if sc == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "active scenario could not be found for the endpoint on this workspace",
+			})
 			return
 		}
 

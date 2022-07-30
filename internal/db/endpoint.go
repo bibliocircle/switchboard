@@ -8,7 +8,9 @@ import (
 	"switchboard/internal/util"
 	"time"
 
+	"github.com/graph-gophers/dataloader"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*models.Endpoint, *common.DetailedError) {
@@ -38,7 +40,7 @@ func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*model
 		Value: endpointId,
 	}}).Decode(&createdEndpoint)
 	if findErr != nil {
-		return nil, common.WrapAsDetailedError(findErr)
+		return nil, GetDbError(findErr)
 	}
 	return &createdEndpoint, nil
 }
@@ -53,14 +55,55 @@ func GetEndpoints(mockServiceID string) ([]models.Endpoint, *common.DetailedErro
 
 	cursor, errFind := endpointsCol.Find(ctx, dbQuery)
 	if errFind != nil {
-		return []models.Endpoint{}, common.WrapAsDetailedError(errFind)
+		return []models.Endpoint{}, GetDbError(errFind)
 	}
 	result := make([]models.Endpoint, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return result, nil
+}
+
+func BatchLoadEndpoints(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+	results := make([]*dataloader.Result, len(keys))
+	eCol := Database.Collection(ENDPOINT_COLLECTION)
+	dbQuery := bson.D{
+		{Key: "id", Value: bson.D{{
+			Key: "$in", Value: keys,
+		}}},
+	}
+
+	cursor, errFind := eCol.Find(ctx, dbQuery)
+	if errFind != nil {
+		return []*dataloader.Result{{
+			Data:  nil,
+			Error: errFind,
+		}}
+	}
+	endpoints := make([]models.Endpoint, 0)
+	err := cursor.All(ctx, &endpoints)
+	if err != nil {
+		return []*dataloader.Result{{
+			Data:  nil,
+			Error: errFind,
+		}}
+	}
+
+	for i := 0; i < len(keys); i++ {
+		results[i] = &dataloader.Result{}
+		for _, s := range endpoints {
+			if s.ID == keys[i].String() {
+				results[i] = &dataloader.Result{
+					Data:  &s,
+					Error: nil,
+				}
+				break
+			}
+		}
+	}
+
+	return results
 }
 
 func GetEndpointByID(ID string) (*models.Endpoint, *common.DetailedError) {
@@ -73,7 +116,10 @@ func GetEndpointByID(ID string) (*models.Endpoint, *common.DetailedError) {
 		Value: ID,
 	}}).Decode(&ep)
 	if findErr != nil {
-		return nil, common.WrapAsDetailedError(findErr)
+		if findErr == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(findErr)
 	}
 	return &ep, nil
 }
@@ -87,7 +133,7 @@ func DeleteEndpoint(userID, endpointID string) (bool, *common.DetailedError) {
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, common.WrapAsDetailedError(errDel)
+		return false, GetDbError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

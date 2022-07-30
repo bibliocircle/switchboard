@@ -5,6 +5,7 @@ import (
 	"switchboard/internal/models"
 
 	"github.com/graphql-go/graphql"
+	"github.com/sirupsen/logrus"
 )
 
 var UserGqlType = graphql.NewObject(graphql.ObjectConfig{
@@ -36,7 +37,8 @@ func GetUserResolver(p graphql.ResolveParams) (interface{}, error) {
 	if ok {
 		user, err := db.GetUserByID(userId)
 		if err != nil {
-			return nil, err
+			logrus.Errorln(err)
+			return nil, NewGqlError(GqlInternalError, "could not retrieve user")
 		}
 		return user, nil
 	}
@@ -46,7 +48,8 @@ func GetUserResolver(p graphql.ResolveParams) (interface{}, error) {
 func GetUsersResolver(p graphql.ResolveParams) (interface{}, error) {
 	users, err := db.GetUsers()
 	if err != nil {
-		return make([]models.User, 0), err
+		logrus.Errorln(err)
+		return make([]models.User, 0), NewGqlError(GqlInternalError, "could not retrieve users")
 	}
 	return users, nil
 }

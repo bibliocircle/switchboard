@@ -16,7 +16,7 @@ import (
 func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedError) {
 	hashedPassword, err := common.CreateHash(user.Password)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 
 	currentTime := time.Now()
@@ -43,7 +43,10 @@ func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedE
 		Key: "id", Value: userId,
 	}}).Decode(&createdUser)
 	if findError != nil {
-		return nil, common.WrapAsDetailedError(fmt.Errorf("could not retrieve created document %s", userId))
+		if findError == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(fmt.Errorf("could not retrieve created document %s", userId))
 	}
 	return &createdUser, nil
 }
@@ -61,7 +64,7 @@ func GetUserByID(userId string) (*models.User, *common.DetailedError) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return &user, nil
 }
@@ -77,12 +80,12 @@ func GetUsers() ([]models.User, *common.DetailedError) {
 	}
 	cursor, errFind := userCollection.Find(ctx, bson.D{}, findOpts)
 	if errFind != nil {
-		return []models.User{}, common.WrapAsDetailedError(errFind)
+		return []models.User{}, GetDbError(errFind)
 	}
 	result := make([]models.User, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return result, nil
 }
@@ -100,11 +103,11 @@ func GetUserByEmailPassword(email string, password string) (*models.User, *commo
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	passwordVerified, err := common.VerifyHash(password, []byte(user.Password))
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	if passwordVerified {
 		return &user, nil

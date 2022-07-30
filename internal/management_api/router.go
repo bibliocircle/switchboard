@@ -4,11 +4,13 @@ import (
 	"io"
 	"net/http"
 	"switchboard/internal/common"
+	"switchboard/internal/db"
 	"switchboard/internal/gql"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"github.com/graph-gophers/dataloader"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 )
@@ -87,6 +89,11 @@ func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
 
 	setupAuthenticatedRoutes(r)
 	r.Any("/graphql", func(ctx *gin.Context) {
+		loaders := &db.Loaders{
+			Scenarios: dataloader.NewBatchedLoader(db.BatchLoadScenarios),
+			Endpoints: dataloader.NewBatchedLoader(db.BatchLoadEndpoints),
+		}
+		ctx.Set(db.LoadersCtxKey, loaders)
 		h.ServeHTTP(ctx.Writer, ctx.Request.WithContext(ctx))
 	})
 	return r

@@ -5,6 +5,7 @@ import (
 	"switchboard/internal/models"
 
 	"github.com/graphql-go/graphql"
+	"github.com/sirupsen/logrus"
 )
 
 var HTTPResponseScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
@@ -34,7 +35,8 @@ var ProxyScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 				}
 				upstream, err := db.GetUpstreamByID(upstreamID)
 				if err != nil {
-					return nil, err
+					logrus.Errorln(err)
+					return nil, NewGqlError(GqlInternalError, "could not retrieve upstream")
 				}
 				return *upstream, nil
 			},
@@ -89,7 +91,8 @@ var ScenarioGqlType = graphql.NewObject(graphql.ObjectConfig{
 				userId := p.Source.(models.Scenario).CreatedBy
 				users, err := db.GetUserByID(userId)
 				if err != nil {
-					return make([]models.User, 0), err
+					logrus.Errorln(err)
+					return make([]models.User, 0), NewGqlError(GqlInternalError, "could not resolve createdBy field")
 				}
 				return users, nil
 			},

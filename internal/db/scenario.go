@@ -7,7 +7,9 @@ import (
 	"switchboard/internal/util"
 	"time"
 
+	"github.com/graph-gophers/dataloader"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func CountScenarios(endpointID string) (int64, *common.DetailedError) {
@@ -19,7 +21,7 @@ func CountScenarios(endpointID string) (int64, *common.DetailedError) {
 		{Key: "endpointId", Value: endpointID},
 	})
 	if errCount != nil {
-		return 0, common.WrapAsDetailedError(errCount)
+		return 0, GetDbError(errCount)
 	}
 	return count, nil
 }
@@ -30,7 +32,7 @@ func CreateScenario(userId string, sc *models.CreateScenarioRequestBody) (*model
 	isDefaultScenario := false
 	count, err := CountScenarios(sc.EndpointId)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	isDefaultScenario = count == 0
 	newScenario := &models.Scenario{
@@ -72,7 +74,10 @@ func CreateScenario(userId string, sc *models.CreateScenarioRequestBody) (*model
 		Value: scenarioId,
 	}}).Decode(&createdScenario)
 	if findErr != nil {
-		return nil, common.WrapAsDetailedError(findErr)
+		if findErr == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(findErr)
 	}
 	return &createdScenario, nil
 }
@@ -87,14 +92,55 @@ func GetScenarios(endpointID string) ([]models.Scenario, *common.DetailedError) 
 
 	cursor, errFind := scenariosCol.Find(ctx, dbQuery)
 	if errFind != nil {
-		return nil, common.WrapAsDetailedError(errFind)
+		return nil, GetDbError(errFind)
 	}
 	result := make([]models.Scenario, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return result, nil
+}
+
+func BatchLoadScenarios(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+	results := make([]*dataloader.Result, len(keys))
+	scenariosCol := Database.Collection(SCENARIOS_COLLECTION)
+	dbQuery := bson.D{
+		{Key: "id", Value: bson.D{{
+			Key: "$in", Value: keys,
+		}}},
+	}
+
+	cursor, errFind := scenariosCol.Find(ctx, dbQuery)
+	if errFind != nil {
+		return []*dataloader.Result{{
+			Data:  nil,
+			Error: errFind,
+		}}
+	}
+	scenarios := make([]models.Scenario, 0)
+	err := cursor.All(ctx, &scenarios)
+	if err != nil {
+		return []*dataloader.Result{{
+			Data:  nil,
+			Error: errFind,
+		}}
+	}
+
+	for i := 0; i < len(keys); i++ {
+		results[i] = &dataloader.Result{}
+		for _, s := range scenarios {
+			if s.ID == keys[i].String() {
+				results[i] = &dataloader.Result{
+					Data:  &s,
+					Error: nil,
+				}
+				break
+			}
+		}
+	}
+
+	return results
 }
 
 func GetScenarioByID(scenarioID string) (*models.Scenario, *common.DetailedError) {
@@ -108,7 +154,10 @@ func GetScenarioByID(scenarioID string) (*models.Scenario, *common.DetailedError
 	}).Decode(&sc)
 
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(err)
 	}
 	return &sc, nil
 }

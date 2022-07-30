@@ -6,6 +6,7 @@ import (
 	"switchboard/internal/models"
 
 	"github.com/graphql-go/graphql"
+	"github.com/sirupsen/logrus"
 )
 
 var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
@@ -30,7 +31,8 @@ var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 				userId := p.Source.(models.Workspace).CreatedBy
 				users, err := db.GetUserByID(userId)
 				if err != nil {
-					return make([]models.User, 0), err
+					logrus.Errorln(err)
+					return make([]models.User, 0), NewGqlError(GqlInternalError, "could not resolve createdBy field")
 				}
 				return users, nil
 			},
@@ -47,7 +49,8 @@ var WorkspaceGqlType = graphql.NewObject(graphql.ObjectConfig{
 func GetWorkspacesResolver(p graphql.ResolveParams) (interface{}, error) {
 	wss, err := db.GetWorkspaces()
 	if err != nil {
-		return make([]models.Workspace, 0), err
+		logrus.Errorln(err)
+		return make([]models.Workspace, 0), NewGqlError(GqlInternalError, "could not retrieve workspaces")
 	}
 	return wss, nil
 }
@@ -56,7 +59,8 @@ func GetUserWorkspacesResolver(p graphql.ResolveParams) (interface{}, error) {
 	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
 	wss, err := db.GetUserWorkspaces(currentUser.ID)
 	if err != nil {
-		return make([]models.Workspace, 0), err
+		logrus.Errorln(err)
+		return make([]models.Workspace, 0), NewGqlError(GqlInternalError, "could not retrieve user workspaces")
 	}
 	return wss, nil
 }

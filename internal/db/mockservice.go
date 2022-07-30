@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -37,7 +38,10 @@ func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (
 		Value: ms.ID,
 	}}).Decode(&createdMockService)
 	if findErr != nil {
-		return nil, common.WrapAsDetailedError(findErr)
+		if findErr == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(findErr)
 	}
 	return &createdMockService, nil
 }
@@ -54,12 +58,12 @@ func GetMockServices() (*[]models.MockService, *common.DetailedError) {
 
 	cursor, errFind := mockServicesCol.Find(ctx, bson.D{}, findOpts)
 	if errFind != nil {
-		return &[]models.MockService{}, common.WrapAsDetailedError(errFind)
+		return &[]models.MockService{}, GetDbError(errFind)
 	}
 	result := make([]models.MockService, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return &result, nil
 }
@@ -78,12 +82,12 @@ func GetMockServicesByIds(ids []string) (*[]models.MockService, *common.Detailed
 		{Key: "id", Value: bson.D{{Key: "$in", Value: ids}}},
 	}, findOpts)
 	if errFind != nil {
-		return &[]models.MockService{}, common.WrapAsDetailedError(errFind)
+		return &[]models.MockService{}, GetDbError(errFind)
 	}
 	result := make([]models.MockService, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, common.WrapAsDetailedError(err)
+		return nil, GetDbError(err)
 	}
 	return &result, nil
 }
@@ -98,7 +102,10 @@ func GetMockServiceByID(ID string) (*models.MockService, *common.DetailedError) 
 		Value: ID,
 	}}).Decode(&ms)
 	if findErr != nil {
-		return nil, common.WrapAsDetailedError(findErr)
+		if findErr == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, GetDbError(findErr)
 	}
 	return &ms, nil
 }
@@ -112,7 +119,7 @@ func DeleteMockService(userID, mockServiceID string) (bool, *common.DetailedErro
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, common.WrapAsDetailedError(errDel)
+		return false, GetDbError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }
