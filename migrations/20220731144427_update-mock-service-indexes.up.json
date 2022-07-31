@@ -1,0 +1,18 @@
+[
+    {
+        "dropIndexes": "mockservices",
+        "index": "primary_id"
+    },
+    {
+        "createIndexes": "mockservices",
+        "indexes": [
+            {
+                "key": {
+                    "id": 1
+                },
+                "name": "primary_id",
+                "unique": true
+            }
+        ]
+    }
+]

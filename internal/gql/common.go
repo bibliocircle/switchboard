@@ -2,12 +2,7 @@ package gql
 
 import "github.com/graphql-go/graphql"
 
-type HTTPHeader struct {
-	Name  string `json:"name"`
-	Value string ` json:"value"`
-}
-
-var HTTPHeaderGqlInputType = graphql.NewObject(graphql.ObjectConfig{
+var HTTPHeaderGqlInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 	Name: "HeaderInput",
 	Fields: graphql.InputObjectConfigFieldMap{
 		"name": &graphql.InputObjectFieldConfig{

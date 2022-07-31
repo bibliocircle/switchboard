@@ -14,13 +14,15 @@ func GraphQLAuthMiddleware(c *gin.Context) {
 	currentUser := c.Value("user").(*models.User)
 	if currentUser.ID == "" {
 		err := NewGqlError(common.ErrorUnauthorised, "unauthorised")
-		c.JSON(http.StatusOK, gin.H{"errors": gqlerrors.FormattedErrors{
-			gqlerrors.FormatError(gqlerrors.Error{
-				Message:       err.Error(),
-				Locations:     []location.SourceLocation{},
-				OriginalError: err,
-			}),
-		}})
+		c.JSON(http.StatusOK, gin.H{
+			"errors": gqlerrors.FormattedErrors{
+				gqlerrors.FormatError(gqlerrors.Error{
+					Message:       err.Error(),
+					Locations:     []location.SourceLocation{},
+					OriginalError: err,
+				}),
+			},
+		})
 		c.Abort()
 		return
 	}

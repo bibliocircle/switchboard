@@ -9,8 +9,8 @@ type HTTPResponseScenarioConfig struct {
 }
 
 type ProxyScenarioConfig struct {
-	UpstreamID    string            `json:"upstreamID" bson:"upstreamID,omitempty"`
-	InjectHeaders map[string]string `json:"injectHeaders" bson:"injectHeaders"`
+	UpstreamID    string       `json:"upstreamID" bson:"upstreamID,omitempty"`
+	InjectHeaders []HTTPHeader `json:"injectHeaders" bson:"injectHeaders"`
 }
 
 type NetworkScenarioConfig struct {
@@ -37,8 +37,8 @@ type HTTPResponseScenarioRequestBody struct {
 }
 
 type ProxyScenarioRequestBody struct {
-	UpstreamID    string            `json:"upstreamID"`
-	InjectHeaders map[string]string `json:"injectHeaders"`
+	UpstreamID    string       `json:"upstreamID"`
+	InjectHeaders []HTTPHeader `json:"injectHeaders"`
 }
 
 type NetworkScenarioRequestBody struct {

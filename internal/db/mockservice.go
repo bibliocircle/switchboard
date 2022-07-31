@@ -63,7 +63,7 @@ func GetMockServices() (*[]*models.MockService, *common.DetailedError) {
 	result := make([]*models.MockService, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, GetDbError(err)
+		return &[]*models.MockService{}, GetDbError(err)
 	}
 	return &result, nil
 }

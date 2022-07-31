@@ -4,9 +4,14 @@ import (
 	"time"
 )
 
+type HTTPHeader struct {
+	Name  string `json:"name"`
+	Value string ` json:"value"`
+}
+
 type GlobalMockServiceConfig struct {
-	InjectHeaders       map[string]string `json:"injectHeaders" bson:"injectHeaders"`
-	GlobalResponseDelay uint16            `json:"globalResponseDelay" bson:"responseDelay"`
+	InjectHeaders       []HTTPHeader `json:"injectHeaders" bson:"injectHeaders"`
+	GlobalResponseDelay uint16       `json:"globalResponseDelay" bson:"responseDelay"`
 }
 
 type MockService struct {

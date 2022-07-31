@@ -24,7 +24,7 @@ var MockServiceGqlInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 			Type: graphql.NewNonNull(graphql.String),
 		},
 		"config": &graphql.InputObjectFieldConfig{
-			Type: graphql.NewNonNull(graphql.String),
+			Type: graphql.NewNonNull(GlobalMockServiceConfigGqlInputType),
 		},
 	},
 })
@@ -46,17 +46,6 @@ var GlobalMockServiceConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 	Fields: graphql.Fields{
 		"injectHeaders": &graphql.Field{
 			Type: graphql.NewList(HTTPHeaderGqlType),
-			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				headers := make([]HTTPHeader, 0)
-				injectHeaders := p.Source.(models.GlobalMockServiceConfig).InjectHeaders
-				for k, v := range injectHeaders {
-					headers = append(headers, HTTPHeader{
-						Name:  k,
-						Value: v,
-					})
-				}
-				return headers, nil
-			},
 		},
 		"globalResponseDelay": &graphql.Field{
 			Type: graphql.Int,
