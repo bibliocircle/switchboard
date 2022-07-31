@@ -1,0 +1,16 @@
+[
+    {
+        "createIndexes": "upstreams",
+        "indexes": [
+            {
+                "key": {
+                    "mockServiceId": 1,
+                    "name": 1,
+                    "url": 1
+                },
+                "unique": true,
+                "name": "unique_key"
+            }
+        ]
+    }
+]

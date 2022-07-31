@@ -1,0 +1,6 @@
+[
+    {
+        "dropIndexes": "upstreams",
+        "index": "unique_key"
+    }
+]
