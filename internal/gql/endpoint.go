@@ -85,12 +85,12 @@ var EndpointGqlType = graphql.NewObject(graphql.ObjectConfig{
 
 func CreateEndpointResolver(p graphql.ResolveParams) (interface{}, error) {
 	var input models.CreateEndpointRequestBody
-	mapstructure.Decode(p.Args["workspace"], &input)
+	mapstructure.Decode(p.Args["endpoint"], &input)
 
 	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
 	createdEndpoint, createErr := db.CreateEndpoint(currentUser.ID, &input)
 	if createErr == nil {
-		return createdEndpoint, nil
+		return *createdEndpoint, nil
 	}
 
 	if createErr.ErrorCode == common.ErrorDuplicateEntity {

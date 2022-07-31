@@ -120,7 +120,7 @@ var RootMutation = graphql.NewObject(
 				Type: ScenarioGqlType,
 				Args: graphql.FieldConfigArgument{
 					"scenario": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(ScenarioConfigGqlType),
+						Type: graphql.NewNonNull(ScenarioGqlInputType),
 					},
 				},
 				Resolve: CreateScenarioResolver,

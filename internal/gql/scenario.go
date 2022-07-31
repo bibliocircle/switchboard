@@ -14,7 +14,7 @@ var HTTPResponseScenarioConfigGqlInputType = graphql.NewInputObject(graphql.Inpu
 	Name: "HTTPResponseScenarioConfigInput",
 	Fields: graphql.InputObjectConfigFieldMap{
 		"statusCode": &graphql.InputObjectFieldConfig{
-			Type: graphql.NewNonNull(graphql.String),
+			Type: graphql.NewNonNull(graphql.Int),
 		},
 		"responseBodyTemplate": &graphql.InputObjectFieldConfig{
 			Type: graphql.String,
