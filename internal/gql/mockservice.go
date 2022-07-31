@@ -82,7 +82,7 @@ var MockServiceGqlType = graphql.NewObject(graphql.ObjectConfig{
 		"upstreams": &graphql.Field{
 			Type: graphql.NewList(UpstreamGqlType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				mockServiceID := p.Source.(models.MockService).ID
+				mockServiceID := p.Source.(*models.MockService).ID
 				upstreams, err := db.GetUpstreams(mockServiceID)
 				if err != nil {
 					logrus.Errorln(err)
@@ -94,7 +94,7 @@ var MockServiceGqlType = graphql.NewObject(graphql.ObjectConfig{
 		"endpoints": &graphql.Field{
 			Type: graphql.NewList(EndpointGqlType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				mockServiceID := p.Source.(models.MockService).ID
+				mockServiceID := p.Source.(*models.MockService).ID
 				endpoints, err := db.GetEndpoints(mockServiceID)
 				if err != nil {
 					logrus.Errorln(err)
@@ -106,7 +106,7 @@ var MockServiceGqlType = graphql.NewObject(graphql.ObjectConfig{
 		"createdBy": &graphql.Field{
 			Type: UserGqlType,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				userId := p.Source.(models.MockService).CreatedBy
+				userId := p.Source.(*models.MockService).CreatedBy
 				users, err := db.GetUserByID(userId)
 				if err != nil {
 					logrus.Errorln(err)
@@ -140,7 +140,7 @@ func GetMockServiceResolver(p graphql.ResolveParams) (interface{}, error) {
 		if err != nil {
 			return nil, NewGqlError(common.ErrorGeneric, "could not retrieve mock service")
 		}
-		return *mockService, nil
+		return mockService, nil
 	}
 	return nil, nil
 }

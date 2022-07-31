@@ -85,7 +85,7 @@ var WorkspaceSettingGqlType = graphql.NewObject(graphql.ObjectConfig{
 					logrus.Errorln(err)
 					return nil, NewGqlError(common.ErrorGeneric, "could not retrieve mock service")
 				}
-				return *ms, nil
+				return ms, nil
 			},
 		},
 		"config": &graphql.Field{
@@ -127,9 +127,9 @@ func GetWorkspaceMockServicesResolver(p graphql.ResolveParams) (interface{}, err
 	wss, errWs := db.GetWorkspaceSettings(workspaceID)
 	if errWs != nil {
 		if errWs.ErrorCode == common.ErrorNotFound {
-			return make([]models.MockService, 0), NewGqlError(common.ErrorNotFound, "workspace settings not found!")
+			return make([]*models.MockService, 0), NewGqlError(common.ErrorNotFound, "workspace settings not found!")
 		}
-		return make([]models.MockService, 0), errWs
+		return make([]*models.MockService, 0), errWs
 	}
 	mockServiceIds := make([]string, 0)
 	for _, ws := range *wss {
@@ -141,7 +141,7 @@ func GetWorkspaceMockServicesResolver(p graphql.ResolveParams) (interface{}, err
 		return nil, errMs
 	}
 
-	return *ms, nil
+	return ms, nil
 }
 
 func GetWorkspaceSettingResolver(p graphql.ResolveParams) (interface{}, error) {

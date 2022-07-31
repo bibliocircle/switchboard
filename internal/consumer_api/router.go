@@ -19,7 +19,7 @@ type HandlerConfig struct {
 }
 
 type ServiceRegistryEntry struct {
-	MockService models.MockService
+	MockService *models.MockService
 	Handlers    []HandlerConfig
 }
 
@@ -43,13 +43,13 @@ func New(name string) ConsumerApiRouter {
 	return r
 }
 
-func (r ConsumerApiRouter) initEndpoints(services <-chan models.MockService, quit chan<- bool) chan ServiceRegistryEntry {
+func (r ConsumerApiRouter) initEndpoints(services <-chan *models.MockService, quit chan<- bool) chan ServiceRegistryEntry {
 	se := make(chan ServiceRegistryEntry)
 	go func() {
 		var wg sync.WaitGroup
 		for s := range services {
 			wg.Add(1)
-			go func(svc models.MockService) {
+			go func(svc *models.MockService) {
 				// may need to initialise middleware here
 				endpoints, err := db.GetEndpoints(svc.ID)
 				if err != nil {
@@ -77,8 +77,8 @@ func (r ConsumerApiRouter) initEndpoints(services <-chan models.MockService, qui
 	return se
 }
 
-func (r ConsumerApiRouter) initServices(quit chan<- bool) chan models.MockService {
-	services := make(chan models.MockService)
+func (r ConsumerApiRouter) initServices(quit chan<- bool) chan *models.MockService {
+	services := make(chan *models.MockService)
 	go func() {
 		mslist, err := db.GetMockServices()
 		if err != nil {

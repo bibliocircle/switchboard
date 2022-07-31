@@ -71,8 +71,8 @@ func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
 
 	setupUnauthenticatedRoutes(r)
 
-	r.Use(common.ParseAuthToken())
-	r.Use(common.RequireAuthentication())
+	r.Use(common.ParseAuthToken)
+	r.Use(gql.GraphQLAuthMiddleware)
 
 	r.Any("/graphql", func(ctx *gin.Context) {
 		loaders := &db.Loaders{
