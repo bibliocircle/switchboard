@@ -177,7 +177,14 @@ func ActivateMockServiceScenarioResolver(p graphql.ResolveParams) (interface{}, 
 		if err != nil {
 			return nil, err
 		}
-		return wss, nil
+		var endpointConfig models.EndpointConfig
+		for _, ec := range wss.EndpointConfigs {
+			if ec.EndpointID == endpointID {
+				endpointConfig = ec
+				break
+			}
+		}
+		return endpointConfig, nil
 	}
 	return nil, nil
 }

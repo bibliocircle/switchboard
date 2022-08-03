@@ -162,7 +162,7 @@ var RootMutation = graphql.NewObject(
 				Resolve: DeleteMockServiceResolver,
 			},
 			"activateMockServiceScenario": &graphql.Field{
-				Type: WorkspaceSettingGqlType,
+				Type: EndpointConfigGqlType,
 				Args: graphql.FieldConfigArgument{
 					"workspaceId": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
