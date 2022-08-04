@@ -1,9 +1,10 @@
-package gql
+package scenario
 
 import (
 	"switchboard/internal/common"
-	"switchboard/internal/db"
-	"switchboard/internal/models"
+	"switchboard/internal/gql"
+	"switchboard/internal/upstream"
+	"switchboard/internal/user"
 
 	"github.com/graphql-go/graphql"
 	"github.com/mitchellh/mapstructure"
@@ -47,7 +48,7 @@ var ProxyScenarioConfigGqlInputType = graphql.NewInputObject(graphql.InputObject
 			Type: graphql.NewNonNull(graphql.String),
 		},
 		"injectHeaders": &graphql.InputObjectFieldConfig{
-			Type: graphql.NewList(HTTPHeaderGqlInputType),
+			Type: graphql.NewList(gql.HTTPHeaderGqlInputType),
 		},
 	},
 })
@@ -56,22 +57,22 @@ var ProxyScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "ProxyScenarioConfig",
 	Fields: graphql.Fields{
 		"upstream": &graphql.Field{
-			Type: UpstreamGqlType,
+			Type: upstream.UpstreamGqlType,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				upstreamID := p.Source.(*models.ProxyScenarioConfig).UpstreamID
+				upstreamID := p.Source.(*ProxyScenarioConfig).UpstreamID
 				if upstreamID == "" {
 					return nil, nil
 				}
-				upstream, err := db.GetUpstreamByID(upstreamID)
+				upstream, err := upstream.GetUpstreamByID(upstreamID)
 				if err != nil {
 					logrus.Errorln(err)
-					return nil, NewGqlError(common.ErrorGeneric, "could not retrieve upstream")
+					return nil, gql.NewGqlError(common.ErrorGeneric, "could not retrieve upstream")
 				}
 				return *upstream, nil
 			},
 		},
 		"injectHeaders": &graphql.Field{
-			Type: graphql.NewList(HTTPHeaderGqlType),
+			Type: graphql.NewList(gql.HTTPHeaderGqlType),
 		},
 	},
 })
@@ -134,13 +135,13 @@ var ScenarioGqlType = graphql.NewObject(graphql.ObjectConfig{
 			Type: NetworkScenarioConfigGqlType,
 		},
 		"createdBy": &graphql.Field{
-			Type: UserGqlType,
+			Type: user.UserGqlType,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				userId := p.Source.(models.Scenario).CreatedBy
-				users, err := db.GetUserByID(userId)
+				userId := p.Source.(Scenario).CreatedBy
+				users, err := user.GetUserByID(userId)
 				if err != nil {
 					logrus.Errorln(err)
-					return make([]models.User, 0), NewGqlError(common.ErrorGeneric, "could not resolve createdBy field")
+					return make([]user.User, 0), gql.NewGqlError(common.ErrorGeneric, "could not resolve createdBy field")
 				}
 				return users, nil
 			},
@@ -155,18 +156,18 @@ var ScenarioGqlType = graphql.NewObject(graphql.ObjectConfig{
 })
 
 func CreateScenarioResolver(p graphql.ResolveParams) (interface{}, error) {
-	var input models.CreateScenarioRequestBody
+	var input CreateScenarioRequestBody
 	mapstructure.Decode(p.Args["scenario"], &input)
-	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*user.User)
 
-	createdScenario, createErr := db.CreateScenario(currentUser.ID, &input)
+	createdScenario, createErr := CreateScenario(currentUser.ID, &input)
 	if createErr == nil {
 		return createdScenario, nil
 	}
 
 	if createErr.ErrorCode == common.ErrorDuplicateEntity {
-		return nil, NewGqlError(common.ErrorDuplicateEntity, "duplicate scenario")
+		return nil, gql.NewGqlError(common.ErrorDuplicateEntity, "duplicate scenario")
 	}
 
-	return nil, NewGqlError(common.ErrorGeneric, "generic error")
+	return nil, gql.NewGqlError(common.ErrorGeneric, "generic error")
 }

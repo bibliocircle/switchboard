@@ -1,10 +1,10 @@
-package gql
+package upstream
 
 import (
 	"fmt"
 	"switchboard/internal/common"
-	"switchboard/internal/db"
-	"switchboard/internal/models"
+	"switchboard/internal/gql"
+	"switchboard/internal/user"
 
 	"github.com/graphql-go/graphql"
 	"github.com/mitchellh/mapstructure"
@@ -39,13 +39,13 @@ var UpstreamGqlType = graphql.NewObject(graphql.ObjectConfig{
 			Type: graphql.String,
 		},
 		"createdBy": &graphql.Field{
-			Type: UserGqlType,
+			Type: user.UserGqlType,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				userId := p.Source.(models.Upstream).CreatedBy
-				users, err := db.GetUserByID(userId)
+				userId := p.Source.(Upstream).CreatedBy
+				users, err := user.GetUserByID(userId)
 				if err != nil {
 					logrus.Errorln(err)
-					return make([]models.User, 0), NewGqlError(common.ErrorGeneric, "could not resolve createdBy field")
+					return make([]user.User, 0), gql.NewGqlError(common.ErrorGeneric, "could not resolve createdBy field")
 				}
 				return users, nil
 			},
@@ -60,32 +60,32 @@ var UpstreamGqlType = graphql.NewObject(graphql.ObjectConfig{
 })
 
 func CreateUpstreamResolver(p graphql.ResolveParams) (interface{}, error) {
-	var input models.CreateUpstreamRequestBody
+	var input CreateUpstreamRequestBody
 	mapstructure.Decode(p.Args["upstream"], &input)
 
-	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
-	createdUpstream, createErr := db.CreateUpstream(currentUser.ID, &input)
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*user.User)
+	createdUpstream, createErr := CreateUpstream(currentUser.ID, &input)
 	if createErr == nil {
 		return createdUpstream, nil
 	}
 
 	if createErr.ErrorCode == common.ErrorDuplicateEntity {
-		return nil, NewGqlError(common.ErrorDuplicateEntity, "duplicate upstream")
+		return nil, gql.NewGqlError(common.ErrorDuplicateEntity, "duplicate upstream")
 	}
 
-	return nil, NewGqlError(common.ErrorGeneric, "could not create upstream")
+	return nil, gql.NewGqlError(common.ErrorGeneric, "could not create upstream")
 }
 
 func DeleteUpstreamResolver(p graphql.ResolveParams) (interface{}, error) {
 	upstreamID := p.Args["upstreamId"].(string)
-	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
-	ok, err := db.DeleteUpstream(currentUser.ID, upstreamID)
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*user.User)
+	ok, err := DeleteUpstream(currentUser.ID, upstreamID)
 	if err != nil {
 		logrus.Errorln(fmt.Sprintf("could not delete upstream %s. [error code: %s] [description: %s]", upstreamID, err.ErrorCode, err.Description))
-		return false, NewGqlError(common.ErrorGeneric, "could not delete upstream")
+		return false, gql.NewGqlError(common.ErrorGeneric, "could not delete upstream")
 	}
 	if !ok {
-		return false, NewGqlError(common.ErrorNotFound, "upstream not found")
+		return false, gql.NewGqlError(common.ErrorNotFound, "upstream not found")
 	}
 
 	return true, nil

@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/mongodb"
@@ -39,11 +40,12 @@ func Migrate(db *mongo.Client) {
 	panic(errMigrate)
 }
 
-func RunMigrations() {
-	ctx := context.Background()
+func Setup() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 	dbError := Connect(ctx)
 	if dbError != nil {
-		log.Fatalln("could not connect to the database", dbError)
+		log.Fatalln("could not connect to the database\n", dbError)
 	}
-	Migrate(Client)
+	Migrate(client)
 }

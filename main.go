@@ -48,7 +48,7 @@ func main() {
 		log.Println("could not locate or read .env file", err)
 	}
 
-	db.RunMigrations()
+	db.Setup()
 	gin.SetMode(gin.ReleaseMode)
 
 	reload := make(chan bool)

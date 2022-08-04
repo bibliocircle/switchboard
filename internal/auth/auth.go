@@ -1,4 +1,4 @@
-package management_api
+package auth
 
 import (
 	"encoding/json"
@@ -6,10 +6,11 @@ import (
 	"os"
 	"strconv"
 	"switchboard/internal/common"
-	"switchboard/internal/db"
-	"switchboard/internal/models"
+	"switchboard/internal/user"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,6 +30,32 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
+func getUserFromClaims(c *jwt.MapClaims) (*user.User, error) {
+	u := &user.User{}
+	err := mapstructure.Decode(c, u)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func ParseAuthToken(c *gin.Context) {
+	c.Set("user", &user.User{})
+	cookie, err := c.Cookie(os.Getenv("AUTH_COOKIE_NAME"))
+	if err != nil {
+		return
+	}
+	claims := jwt.MapClaims{}
+	jwt.ParseWithClaims(cookie, claims, func(t *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("AUTH_TOKEN_KEY")), nil
+	})
+
+	user, err := getUserFromClaims(&claims)
+	if err == nil {
+		c.Set("user", user)
+	}
+}
+
 func LoginRoute(c *gin.Context) {
 	var payload LoginPayload
 	if err := json.NewDecoder(c.Request.Body).Decode(&payload); err != nil {
@@ -44,7 +71,7 @@ func LoginRoute(c *gin.Context) {
 		})
 		return
 	}
-	userEntity, err := db.GetUserByEmailPassword(payload.Email, payload.Password)
+	userEntity, err := user.GetUserByEmailPassword(payload.Email, payload.Password)
 	if err != nil {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 		return
@@ -53,7 +80,7 @@ func LoginRoute(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	token, tokenError := common.CreateSignedAuthToken(*userEntity)
+	token, tokenError := CreateSignedAuthToken(*userEntity)
 	if tokenError != nil {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 		return
@@ -85,7 +112,7 @@ func SignUpRoute(c *gin.Context) {
 		})
 	}
 
-	createdUser, err := db.CreateUser(&models.CreateUserRequest{
+	createdUser, err := user.CreateUser(&user.CreateUserRequest{
 		FirstName: payload.FirstName,
 		LastName:  payload.LastName,
 		Email:     payload.Email,
@@ -102,7 +129,7 @@ func SignUpRoute(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	c.JSON(http.StatusOK, models.User{
+	c.JSON(http.StatusOK, user.User{
 		ID:        createdUser.ID,
 		FirstName: createdUser.FirstName,
 		LastName:  createdUser.LastName,

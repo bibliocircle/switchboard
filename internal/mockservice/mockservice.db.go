@@ -1,9 +1,9 @@
-package db
+package mockservice
 
 import (
 	"context"
 	"switchboard/internal/common"
-	"switchboard/internal/models"
+	"switchboard/internal/db"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,13 +11,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (*models.MockService, *common.DetailedError) {
+func CreateMockService(userId string, ms *CreateMockServiceRequestBody) (*MockService, *common.DetailedError) {
 	currentTime := time.Now()
-	newMockService := &models.MockService{
+	newMockService := &MockService{
 		ID:   ms.ID,
 		Name: ms.Name,
 		Type: ms.Type,
-		Config: models.GlobalMockServiceConfig{
+		Config: GlobalMockServiceConfig{
 			InjectHeaders:       ms.Config.InjectHeaders,
 			GlobalResponseDelay: ms.Config.GlobalResponseDelay,
 		},
@@ -27,12 +27,12 @@ func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mockServicesCollection := Database.Collection(MOCKSERVICES_COLLECTION)
+	mockServicesCollection := db.Database.Collection(db.MOCKSERVICES_COLLECTION)
 	_, insertErr := mockServicesCollection.InsertOne(ctx, newMockService)
 	if insertErr != nil {
-		return nil, GetDbError(insertErr)
+		return nil, db.GetDbError(insertErr)
 	}
-	var createdMockService models.MockService
+	var createdMockService MockService
 	findErr := mockServicesCollection.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: ms.ID,
@@ -41,15 +41,15 @@ func CreateMockService(userId string, ms *models.CreateMockServiceRequestBody) (
 		if findErr == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(findErr)
+		return nil, db.GetDbError(findErr)
 	}
 	return &createdMockService, nil
 }
 
-func GetMockServices() (*[]*models.MockService, *common.DetailedError) {
+func GetMockServices() (*[]*MockService, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mockServicesCol := Database.Collection(MOCKSERVICES_COLLECTION)
+	mockServicesCol := db.Database.Collection(db.MOCKSERVICES_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": -1,
@@ -58,20 +58,20 @@ func GetMockServices() (*[]*models.MockService, *common.DetailedError) {
 
 	cursor, errFind := mockServicesCol.Find(ctx, bson.D{}, findOpts)
 	if errFind != nil {
-		return &[]*models.MockService{}, GetDbError(errFind)
+		return &[]*MockService{}, db.GetDbError(errFind)
 	}
-	result := make([]*models.MockService, 0)
+	result := make([]*MockService, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return &[]*models.MockService{}, GetDbError(err)
+		return &[]*MockService{}, db.GetDbError(err)
 	}
 	return &result, nil
 }
 
-func GetMockServicesByIds(ids []string) (*[]*models.MockService, *common.DetailedError) {
+func GetMockServicesByIds(ids []string) (*[]*MockService, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mockServicesCol := Database.Collection(MOCKSERVICES_COLLECTION)
+	mockServicesCol := db.Database.Collection(db.MOCKSERVICES_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": -1,
@@ -82,21 +82,21 @@ func GetMockServicesByIds(ids []string) (*[]*models.MockService, *common.Detaile
 		{Key: "id", Value: bson.D{{Key: "$in", Value: ids}}},
 	}, findOpts)
 	if errFind != nil {
-		return &[]*models.MockService{}, GetDbError(errFind)
+		return &[]*MockService{}, db.GetDbError(errFind)
 	}
-	result := make([]*models.MockService, 0)
+	result := make([]*MockService, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	return &result, nil
 }
 
-func GetMockServiceByID(ID string) (*models.MockService, *common.DetailedError) {
+func GetMockServiceByID(ID string) (*MockService, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	var ms models.MockService
-	mockServicesCol := Database.Collection(MOCKSERVICES_COLLECTION)
+	var ms MockService
+	mockServicesCol := db.Database.Collection(db.MOCKSERVICES_COLLECTION)
 	findErr := mockServicesCol.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: ID,
@@ -105,7 +105,7 @@ func GetMockServiceByID(ID string) (*models.MockService, *common.DetailedError) 
 		if findErr == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(findErr)
+		return nil, db.GetDbError(findErr)
 	}
 	return &ms, nil
 }
@@ -113,13 +113,13 @@ func GetMockServiceByID(ID string) (*models.MockService, *common.DetailedError) 
 func DeleteMockService(userID, mockServiceID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mockServicesCol := Database.Collection(MOCKSERVICES_COLLECTION)
+	mockServicesCol := db.Database.Collection(db.MOCKSERVICES_COLLECTION)
 	result, errDel := mockServicesCol.DeleteOne(ctx, bson.D{
 		{Key: "id", Value: mockServiceID},
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, GetDbError(errDel)
+		return false, db.GetDbError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

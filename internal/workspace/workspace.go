@@ -1,9 +1,9 @@
-package db
+package workspace
 
 import (
 	"context"
 	"switchboard/internal/common"
-	"switchboard/internal/models"
+	"switchboard/internal/db"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*models.Workspace, *common.DetailedError) {
+func CreateWorkspace(userId string, ws *CreateWorkspaceRequestBody) (*Workspace, *common.DetailedError) {
 	wsId := common.GetShortId()
 	currentTime := time.Now()
 	var expiresAt *time.Time
@@ -25,7 +25,7 @@ func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*mod
 		}
 	}
 
-	newWs := &models.Workspace{
+	newWs := &Workspace{
 		ID:        wsId,
 		Name:      ws.Name,
 		ExpiresAt: expiresAt,
@@ -35,12 +35,12 @@ func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*mod
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wsCollection := Database.Collection(WORKSPACES_COLLECTION)
+	wsCollection := db.Database.Collection(db.WORKSPACES_COLLECTION)
 	_, insertErr := wsCollection.InsertOne(ctx, newWs)
 	if insertErr != nil {
-		return nil, GetDbError(insertErr)
+		return nil, db.GetDbError(insertErr)
 	}
-	var createdWs models.Workspace
+	var createdWs Workspace
 	findErr := wsCollection.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: wsId,
@@ -49,15 +49,15 @@ func CreateWorkspace(userId string, ws *models.CreateWorkspaceRequestBody) (*mod
 		if findErr == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(findErr)
+		return nil, db.GetDbError(findErr)
 	}
 	return &createdWs, nil
 }
 
-func FindWorkspaces(filter *bson.D) (*[]models.Workspace, *common.DetailedError) {
+func FindWorkspaces(filter *bson.D) (*[]Workspace, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wsCol := Database.Collection(WORKSPACES_COLLECTION)
+	wsCol := db.Database.Collection(db.WORKSPACES_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": -1,
@@ -66,31 +66,27 @@ func FindWorkspaces(filter *bson.D) (*[]models.Workspace, *common.DetailedError)
 
 	cursor, errFind := wsCol.Find(ctx, filter, findOpts)
 	if errFind != nil {
-		return &[]models.Workspace{}, GetDbError(errFind)
+		return &[]Workspace{}, db.GetDbError(errFind)
 	}
-	result := make([]models.Workspace, 0)
+	result := make([]Workspace, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	return &result, nil
 }
 
-func GetWorkspaces() (*[]models.Workspace, *common.DetailedError) {
-	return FindWorkspaces(&bson.D{})
-}
-
-func GetUserWorkspaces(userID string) (*[]models.Workspace, *common.DetailedError) {
+func GetWorkspaces(userID string) (*[]Workspace, *common.DetailedError) {
 	return FindWorkspaces(&bson.D{
 		{Key: "createdBy", Value: userID},
 	})
 }
 
-func GetUserWorkspaceByID(userID, workspaceID string) (*models.Workspace, *common.DetailedError) {
+func GetUserWorkspaceByID(userID, workspaceID string) (*Workspace, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	var ws models.Workspace
-	wsCol := Database.Collection(WORKSPACES_COLLECTION)
+	var ws Workspace
+	wsCol := db.Database.Collection(db.WORKSPACES_COLLECTION)
 	findErr := wsCol.FindOne(ctx, bson.D{
 		{
 			Key:   "id",
@@ -105,7 +101,7 @@ func GetUserWorkspaceByID(userID, workspaceID string) (*models.Workspace, *commo
 		if findErr == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(findErr)
+		return nil, db.GetDbError(findErr)
 	}
 	return &ws, nil
 }
@@ -113,13 +109,13 @@ func GetUserWorkspaceByID(userID, workspaceID string) (*models.Workspace, *commo
 func IsWorkspaceOwner(userId, workspaceId string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wsCol := Database.Collection(WORKSPACES_COLLECTION)
+	wsCol := db.Database.Collection(db.WORKSPACES_COLLECTION)
 	count, err := wsCol.CountDocuments(ctx, bson.D{
 		{Key: "id", Value: workspaceId},
 		{Key: "createdBy", Value: userId},
 	})
 	if err != nil {
-		return false, GetDbError(err)
+		return false, db.GetDbError(err)
 	}
 	return count > 0, nil
 }
@@ -127,13 +123,13 @@ func IsWorkspaceOwner(userId, workspaceId string) (bool, *common.DetailedError) 
 func DeleteWorkspace(userID, wsId string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wsCol := Database.Collection(WORKSPACES_COLLECTION)
+	wsCol := db.Database.Collection(db.WORKSPACES_COLLECTION)
 	result, errDel := wsCol.DeleteOne(ctx, bson.D{
 		{Key: "id", Value: wsId},
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, GetDbError(errDel)
+		return false, db.GetDbError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

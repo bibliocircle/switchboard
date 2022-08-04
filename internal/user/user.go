@@ -1,10 +1,10 @@
-package db
+package user
 
 import (
 	"context"
 	"fmt"
 	"switchboard/internal/common"
-	"switchboard/internal/models"
+	"switchboard/internal/db"
 	"switchboard/internal/util"
 	"time"
 
@@ -14,15 +14,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedError) {
+func CreateUser(user *CreateUserRequest) (*User, *common.DetailedError) {
 	hashedPassword, err := common.CreateHash(user.Password)
 	if err != nil {
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 
 	currentTime := time.Now()
 	userId := util.UUIDv4()
-	newUser := &models.User{
+	newUser := &User{
 		ID:        userId,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
@@ -33,13 +33,13 @@ func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedE
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	userCollection := Database.Collection(USERS_COLLECTION)
+	userCollection := db.Database.Collection(db.USERS_COLLECTION)
 	_, insertError := userCollection.InsertOne(ctx, newUser)
 	if insertError != nil {
-		return nil, GetDbError(insertError)
+		return nil, db.GetDbError(insertError)
 	}
 
-	var createdUser models.User
+	var createdUser User
 	findError := userCollection.FindOne(ctx, bson.D{{
 		Key: "id", Value: userId,
 	}}).Decode(&createdUser)
@@ -47,14 +47,14 @@ func CreateUser(user *models.CreateUserRequest) (*models.User, *common.DetailedE
 		if findError == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(fmt.Errorf("could not retrieve created document %s", userId))
+		return nil, db.GetDbError(fmt.Errorf("could not retrieve created document %s", userId))
 	}
 	return &createdUser, nil
 }
 
-func GetUserByID(userId string) (*models.User, *common.DetailedError) {
-	var user models.User
-	userCollection := Database.Collection(USERS_COLLECTION)
+func GetUserByID(userId string) (*User, *common.DetailedError) {
+	var user User
+	userCollection := db.Database.Collection(db.USERS_COLLECTION)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := userCollection.FindOne(ctx, bson.D{{
@@ -65,14 +65,14 @@ func GetUserByID(userId string) (*models.User, *common.DetailedError) {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	return &user, nil
 }
 
 func BatchLoadUsers(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 	results := make([]*dataloader.Result, len(keys))
-	usersCol := Database.Collection(USERS_COLLECTION)
+	usersCol := db.Database.Collection(db.USERS_COLLECTION)
 	dbQuery := bson.D{
 		{Key: "id", Value: bson.D{{
 			Key: "$in", Value: keys,
@@ -86,7 +86,7 @@ func BatchLoadUsers(ctx context.Context, keys dataloader.Keys) []*dataloader.Res
 			Error: errFind,
 		}}
 	}
-	users := make([]models.User, 0)
+	users := make([]User, 0)
 	err := cursor.All(ctx, &users)
 	if err != nil {
 		return []*dataloader.Result{{
@@ -111,10 +111,10 @@ func BatchLoadUsers(ctx context.Context, keys dataloader.Keys) []*dataloader.Res
 	return results
 }
 
-func GetUsers() ([]models.User, *common.DetailedError) {
+func GetUsers() ([]User, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	userCollection := Database.Collection(USERS_COLLECTION)
+	userCollection := db.Database.Collection(db.USERS_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": -1,
@@ -122,19 +122,19 @@ func GetUsers() ([]models.User, *common.DetailedError) {
 	}
 	cursor, errFind := userCollection.Find(ctx, bson.D{}, findOpts)
 	if errFind != nil {
-		return []models.User{}, GetDbError(errFind)
+		return []User{}, db.GetDbError(errFind)
 	}
-	result := make([]models.User, 0)
+	result := make([]User, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	return result, nil
 }
 
-func GetUserByEmailPassword(email string, password string) (*models.User, *common.DetailedError) {
-	var user models.User
-	userCollection := Database.Collection(USERS_COLLECTION)
+func GetUserByEmailPassword(email string, password string) (*User, *common.DetailedError) {
+	var user User
+	userCollection := db.Database.Collection(db.USERS_COLLECTION)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := userCollection.FindOne(ctx, bson.D{{
@@ -145,11 +145,11 @@ func GetUserByEmailPassword(email string, password string) (*models.User, *commo
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	passwordVerified, err := common.VerifyHash(password, []byte(user.Password))
 	if err != nil {
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	if passwordVerified {
 		return &user, nil

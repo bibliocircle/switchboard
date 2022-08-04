@@ -1,4 +1,6 @@
-package models
+package workspace_setting
+
+import "switchboard/internal/mockservice"
 
 type ScenarioConfig struct {
 	ID         string `json:"id" bson:"id"`
@@ -14,11 +16,11 @@ type EndpointConfig struct {
 }
 
 type WorkspaceSetting struct {
-	ID              string                  `json:"id" bson:"id"`
-	WorkspaceID     string                  `json:"workspaceId" bson:"workspaceId,omitempty"`
-	MockServiceID   string                  `json:"mockServiceId" bson:"mockServiceId,omitempty"`
-	Config          GlobalMockServiceConfig `json:"config" bson:"config,omitempty"`
-	EndpointConfigs []EndpointConfig        `json:"endpointConfigs" bson:"endpointConfigs"`
+	ID              string                              `json:"id" bson:"id"`
+	WorkspaceID     string                              `json:"workspaceId" bson:"workspaceId,omitempty"`
+	MockServiceID   string                              `json:"mockServiceId" bson:"mockServiceId,omitempty"`
+	Config          mockservice.GlobalMockServiceConfig `json:"config" bson:"config,omitempty"`
+	EndpointConfigs []EndpointConfig                    `json:"endpointConfigs" bson:"endpointConfigs"`
 }
 
 type UpdateMockServiceConfigRequestBody struct {

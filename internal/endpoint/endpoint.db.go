@@ -1,10 +1,10 @@
-package db
+package endpoint
 
 import (
 	"context"
 	"strings"
 	"switchboard/internal/common"
-	"switchboard/internal/models"
+	"switchboard/internal/db"
 	"switchboard/internal/util"
 	"time"
 
@@ -13,10 +13,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*models.Endpoint, *common.DetailedError) {
+func CreateEndpoint(userId string, ep *CreateEndpointRequestBody) (*Endpoint, *common.DetailedError) {
 	endpointId := util.UUIDv4()
 	currentTime := time.Now()
-	newEndpoint := &models.Endpoint{
+	newEndpoint := &Endpoint{
 		ID:            endpointId,
 		MockServiceId: ep.MockServiceId,
 		Path:          ep.Path,
@@ -29,45 +29,45 @@ func CreateEndpoint(userId string, ep *models.CreateEndpointRequestBody) (*model
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	endpointsCollection := Database.Collection(ENDPOINT_COLLECTION)
+	endpointsCollection := db.Database.Collection(db.ENDPOINT_COLLECTION)
 	_, insertErr := endpointsCollection.InsertOne(ctx, newEndpoint)
 	if insertErr != nil {
-		return nil, GetDbError(insertErr)
+		return nil, db.GetDbError(insertErr)
 	}
-	var createdEndpoint models.Endpoint
+	var createdEndpoint Endpoint
 	findErr := endpointsCollection.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: endpointId,
 	}}).Decode(&createdEndpoint)
 	if findErr != nil {
-		return nil, GetDbError(findErr)
+		return nil, db.GetDbError(findErr)
 	}
 	return &createdEndpoint, nil
 }
 
-func GetEndpoints(mockServiceID string) ([]models.Endpoint, *common.DetailedError) {
+func GetEndpoints(mockServiceID string) ([]Endpoint, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	endpointsCol := Database.Collection(ENDPOINT_COLLECTION)
+	endpointsCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
 	dbQuery := bson.D{
 		{Key: "mockServiceId", Value: mockServiceID},
 	}
 
 	cursor, errFind := endpointsCol.Find(ctx, dbQuery)
 	if errFind != nil {
-		return []models.Endpoint{}, GetDbError(errFind)
+		return []Endpoint{}, db.GetDbError(errFind)
 	}
-	result := make([]models.Endpoint, 0)
+	result := make([]Endpoint, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	return result, nil
 }
 
 func BatchLoadEndpoints(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 	results := make([]*dataloader.Result, len(keys))
-	eCol := Database.Collection(ENDPOINT_COLLECTION)
+	eCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
 	dbQuery := bson.D{
 		{Key: "id", Value: bson.D{{
 			Key: "$in", Value: keys,
@@ -81,7 +81,7 @@ func BatchLoadEndpoints(ctx context.Context, keys dataloader.Keys) []*dataloader
 			Error: errFind,
 		}}
 	}
-	endpoints := make([]models.Endpoint, 0)
+	endpoints := make([]Endpoint, 0)
 	err := cursor.All(ctx, &endpoints)
 	if err != nil {
 		return []*dataloader.Result{{
@@ -106,11 +106,11 @@ func BatchLoadEndpoints(ctx context.Context, keys dataloader.Keys) []*dataloader
 	return results
 }
 
-func GetEndpointByID(ID string) (*models.Endpoint, *common.DetailedError) {
+func GetEndpointByID(ID string) (*Endpoint, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	var ep models.Endpoint
-	eCol := Database.Collection(ENDPOINT_COLLECTION)
+	var ep Endpoint
+	eCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
 	findErr := eCol.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: ID,
@@ -119,7 +119,7 @@ func GetEndpointByID(ID string) (*models.Endpoint, *common.DetailedError) {
 		if findErr == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(findErr)
+		return nil, db.GetDbError(findErr)
 	}
 	return &ep, nil
 }
@@ -127,13 +127,13 @@ func GetEndpointByID(ID string) (*models.Endpoint, *common.DetailedError) {
 func DeleteEndpoint(userID, endpointID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	endpointsCol := Database.Collection(ENDPOINT_COLLECTION)
+	endpointsCol := db.Database.Collection(db.ENDPOINT_COLLECTION)
 	result, errDel := endpointsCol.DeleteOne(ctx, bson.D{
 		{Key: "id", Value: endpointID},
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, GetDbError(errDel)
+		return false, db.GetDbError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

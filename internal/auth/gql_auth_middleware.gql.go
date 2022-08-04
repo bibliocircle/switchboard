@@ -1,9 +1,10 @@
-package gql
+package auth
 
 import (
 	"net/http"
 	"switchboard/internal/common"
-	"switchboard/internal/models"
+	"switchboard/internal/gql"
+	"switchboard/internal/user"
 
 	"github.com/gin-gonic/gin"
 	"github.com/graphql-go/graphql/gqlerrors"
@@ -11,9 +12,9 @@ import (
 )
 
 func GraphQLAuthMiddleware(c *gin.Context) {
-	currentUser := c.Value("user").(*models.User)
+	currentUser := c.Value("user").(*user.User)
 	if currentUser.ID == "" {
-		err := NewGqlError(common.ErrorUnauthorised, "unauthorised")
+		err := gql.NewGqlError(common.ErrorUnauthorised, "unauthorised")
 		c.JSON(http.StatusOK, gin.H{
 			"errors": gqlerrors.FormattedErrors{
 				gqlerrors.FormatError(gqlerrors.Error{

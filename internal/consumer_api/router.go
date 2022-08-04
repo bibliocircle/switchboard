@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"switchboard/internal/common"
-	"switchboard/internal/db"
-	"switchboard/internal/models"
+	"switchboard/internal/endpoint"
+	"switchboard/internal/mockservice"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +19,7 @@ type HandlerConfig struct {
 }
 
 type ServiceRegistryEntry struct {
-	MockService *models.MockService
+	MockService *mockservice.MockService
 	Handlers    []HandlerConfig
 }
 
@@ -43,15 +43,15 @@ func New(name string) ConsumerApiRouter {
 	return r
 }
 
-func (r ConsumerApiRouter) initEndpoints(services <-chan *models.MockService, quit chan<- bool) chan ServiceRegistryEntry {
+func (r ConsumerApiRouter) initEndpoints(services <-chan *mockservice.MockService, quit chan<- bool) chan ServiceRegistryEntry {
 	se := make(chan ServiceRegistryEntry)
 	go func() {
 		var wg sync.WaitGroup
 		for s := range services {
 			wg.Add(1)
-			go func(svc *models.MockService) {
+			go func(svc *mockservice.MockService) {
 				// may need to initialise middleware here
-				endpoints, err := db.GetEndpoints(svc.ID)
+				endpoints, err := endpoint.GetEndpoints(svc.ID)
 				if err != nil {
 					log.Errorln(fmt.Sprintf("could not launch endpoints for mock service: %s (ID: %s)", svc.Name, svc.ID), err)
 					quit <- true
@@ -77,10 +77,10 @@ func (r ConsumerApiRouter) initEndpoints(services <-chan *models.MockService, qu
 	return se
 }
 
-func (r ConsumerApiRouter) initServices(quit chan<- bool) chan *models.MockService {
-	services := make(chan *models.MockService)
+func (r ConsumerApiRouter) initServices(quit chan<- bool) chan *mockservice.MockService {
+	services := make(chan *mockservice.MockService)
 	go func() {
-		mslist, err := db.GetMockServices()
+		mslist, err := mockservice.GetMockServices()
 		if err != nil {
 			log.Errorln("could not retrieve mock services", err)
 			quit <- true

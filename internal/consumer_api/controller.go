@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"switchboard/internal/common"
-	"switchboard/internal/db"
-	"switchboard/internal/models"
+	"switchboard/internal/scenario"
+	"switchboard/internal/workspace_setting"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
 
-func activateHTTPResponseScenario(cfg *models.HTTPResponseScenarioConfig, ctx *gin.Context) {
+func activateHTTPResponseScenario(cfg *scenario.HTTPResponseScenarioConfig, ctx *gin.Context) {
 	ctx.Status(int(cfg.StatusCode))
 	headers := map[string]string{}
 	headersStr, rhErr := common.GenFakeData(cfg.ResponseHeadersTemplate)
@@ -36,7 +36,7 @@ func activateHTTPResponseScenario(cfg *models.HTTPResponseScenarioConfig, ctx *g
 	ctx.Writer.Write([]byte(bodyStr))
 }
 
-func activateScenario(sc *models.Scenario, ctx *gin.Context) {
+func activateScenario(sc *scenario.Scenario, ctx *gin.Context) {
 	switch sc.Type {
 	case common.HTTP_SCENARIO_TYPE:
 		activateHTTPResponseScenario(sc.HTTPResponseScenarioConfig, ctx)
@@ -54,7 +54,7 @@ func CreateRoute(mockServiceID, endpointID string) gin.HandlerFunc {
 		msID := mockServiceID
 		eID := endpointID
 
-		wss, wsErr := db.GetWorkspaceSetting(wsID, msID)
+		wss, wsErr := workspace_setting.GetWorkspaceSetting(wsID, msID)
 		if wsErr != nil {
 			c.Writer.WriteHeader(http.StatusInternalServerError)
 			return
@@ -86,7 +86,7 @@ func CreateRoute(mockServiceID, endpointID string) gin.HandlerFunc {
 			return
 		}
 
-		sc, scErr := db.GetScenarioByID(activeScenarioId)
+		sc, scErr := scenario.GetScenarioByID(activeScenarioId)
 		if scErr != nil {
 			c.Writer.WriteHeader(http.StatusInternalServerError)
 			return

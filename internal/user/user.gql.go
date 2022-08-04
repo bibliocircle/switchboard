@@ -1,9 +1,9 @@
-package gql
+package user
 
 import (
+	"os/user"
 	"switchboard/internal/common"
-	"switchboard/internal/db"
-	"switchboard/internal/models"
+	"switchboard/internal/gql"
 
 	"github.com/graphql-go/graphql"
 	"github.com/sirupsen/logrus"
@@ -36,10 +36,10 @@ var UserGqlType = graphql.NewObject(graphql.ObjectConfig{
 func GetUserResolver(p graphql.ResolveParams) (interface{}, error) {
 	userId, ok := p.Args["id"].(string)
 	if ok {
-		user, err := db.GetUserByID(userId)
+		user, err := GetUserByID(userId)
 		if err != nil {
 			logrus.Errorln(err)
-			return nil, NewGqlError(common.ErrorGeneric, "could not retrieve user")
+			return nil, gql.NewGqlError(common.ErrorGeneric, "could not retrieve user")
 		}
 		return user, nil
 	}
@@ -47,10 +47,10 @@ func GetUserResolver(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func GetUsersResolver(p graphql.ResolveParams) (interface{}, error) {
-	users, err := db.GetUsers()
+	users, err := GetUsers()
 	if err != nil {
 		logrus.Errorln(err)
-		return make([]models.User, 0), NewGqlError(common.ErrorGeneric, "could not retrieve users")
+		return make([]user.User, 0), gql.NewGqlError(common.ErrorGeneric, "could not retrieve users")
 	}
 	return users, nil
 }

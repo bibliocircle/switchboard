@@ -1,6 +1,13 @@
-package models
+package scenario
 
-import "time"
+import (
+	"time"
+)
+
+type HTTPHeader struct {
+	Name  string `json:"name"`
+	Value string ` json:"value"`
+}
 
 type HTTPResponseScenarioConfig struct {
 	StatusCode              uint16 `json:"statusCode" bson:"statusCode,omitempty"`

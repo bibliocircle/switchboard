@@ -1,9 +1,9 @@
-package db
+package upstream
 
 import (
 	"context"
 	"switchboard/internal/common"
-	"switchboard/internal/models"
+	"switchboard/internal/db"
 	"switchboard/internal/util"
 	"time"
 
@@ -12,10 +12,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (*models.Upstream, *common.DetailedError) {
+func CreateUpstream(userID string, upstream *CreateUpstreamRequestBody) (*Upstream, *common.DetailedError) {
 	upstreamId := util.UUIDv4()
 	currentTime := time.Now()
-	newUpstream := &models.Upstream{
+	newUpstream := &Upstream{
 		ID:            upstreamId,
 		MockServiceId: upstream.MockServiceId,
 		Name:          upstream.Name,
@@ -26,12 +26,12 @@ func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	upstreamsCollection := Database.Collection(UPSTREAMS_COLLECTION)
+	upstreamsCollection := db.Database.Collection(db.UPSTREAMS_COLLECTION)
 	_, insertErr := upstreamsCollection.InsertOne(ctx, newUpstream)
 	if insertErr != nil {
-		return nil, GetDbError(insertErr)
+		return nil, db.GetDbError(insertErr)
 	}
-	var createdUpstream models.Upstream
+	var createdUpstream Upstream
 	findErr := upstreamsCollection.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: upstreamId,
@@ -40,15 +40,15 @@ func CreateUpstream(userID string, upstream *models.CreateUpstreamRequestBody) (
 		if findErr == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(findErr)
+		return nil, db.GetDbError(findErr)
 	}
 	return &createdUpstream, nil
 }
 
-func GetUpstreams(mockServiceID string) ([]models.Upstream, *common.DetailedError) {
+func GetUpstreams(mockServiceID string) ([]Upstream, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	upstreamsCol := Database.Collection(UPSTREAMS_COLLECTION)
+	upstreamsCol := db.Database.Collection(db.UPSTREAMS_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": -1,
@@ -60,21 +60,21 @@ func GetUpstreams(mockServiceID string) ([]models.Upstream, *common.DetailedErro
 
 	cursor, errFind := upstreamsCol.Find(ctx, dbQuery, findOpts)
 	if errFind != nil {
-		return []models.Upstream{}, GetDbError(errFind)
+		return []Upstream{}, db.GetDbError(errFind)
 	}
-	result := make([]models.Upstream, 0)
+	result := make([]Upstream, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	return result, nil
 }
 
-func GetUpstreamByID(ID string) (*models.Upstream, *common.DetailedError) {
+func GetUpstreamByID(ID string) (*Upstream, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	var upstream models.Upstream
-	upstreamsCol := Database.Collection(UPSTREAMS_COLLECTION)
+	var upstream Upstream
+	upstreamsCol := db.Database.Collection(db.UPSTREAMS_COLLECTION)
 	findErr := upstreamsCol.FindOne(ctx, bson.D{{
 		Key:   "id",
 		Value: ID,
@@ -83,7 +83,7 @@ func GetUpstreamByID(ID string) (*models.Upstream, *common.DetailedError) {
 		if findErr == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(findErr)
+		return nil, db.GetDbError(findErr)
 	}
 	return &upstream, nil
 }
@@ -91,13 +91,13 @@ func GetUpstreamByID(ID string) (*models.Upstream, *common.DetailedError) {
 func DeleteUpstream(userID, upstreamID string) (bool, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	upstreamsCol := Database.Collection(UPSTREAMS_COLLECTION)
+	upstreamsCol := db.Database.Collection(db.UPSTREAMS_COLLECTION)
 	result, errDel := upstreamsCol.DeleteOne(ctx, bson.D{
 		{Key: "id", Value: upstreamID},
 		{Key: "createdBy", Value: userID},
 	})
 	if errDel != nil {
-		return false, GetDbError(errDel)
+		return false, db.GetDbError(errDel)
 	}
 	return result.DeletedCount > 0, nil
 }

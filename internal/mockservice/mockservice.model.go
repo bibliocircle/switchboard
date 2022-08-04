@@ -1,17 +1,13 @@
-package models
+package mockservice
 
 import (
+	"switchboard/internal/scenario"
 	"time"
 )
 
-type HTTPHeader struct {
-	Name  string `json:"name"`
-	Value string ` json:"value"`
-}
-
 type GlobalMockServiceConfig struct {
-	InjectHeaders       []HTTPHeader `json:"injectHeaders" bson:"injectHeaders"`
-	GlobalResponseDelay uint16       `json:"globalResponseDelay" bson:"responseDelay"`
+	InjectHeaders       []scenario.HTTPHeader `json:"injectHeaders" bson:"injectHeaders"`
+	GlobalResponseDelay uint16                `json:"globalResponseDelay" bson:"responseDelay"`
 }
 
 type MockService struct {

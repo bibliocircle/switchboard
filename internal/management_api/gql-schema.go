@@ -1,6 +1,14 @@
-package gql
+package management_api
 
 import (
+	"switchboard/internal/endpoint"
+	"switchboard/internal/mockservice"
+	"switchboard/internal/scenario"
+	"switchboard/internal/upstream"
+	"switchboard/internal/user"
+	"switchboard/internal/workspace"
+	"switchboard/internal/workspace_setting"
+
 	"github.com/graphql-go/graphql"
 )
 
@@ -9,59 +17,55 @@ var RootQuery = graphql.NewObject(
 		Name: "RootQuery",
 		Fields: graphql.Fields{
 			"users": &graphql.Field{
-				Type:    graphql.NewList(UserGqlType),
-				Resolve: GetUsersResolver,
+				Type:    graphql.NewList(user.UserGqlType),
+				Resolve: user.GetUsersResolver,
 			},
 			"user": &graphql.Field{
-				Type: UserGqlType,
+				Type: user.UserGqlType,
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
 						Type: graphql.String,
 					},
 				},
-				Resolve: GetUserResolver,
+				Resolve: user.GetUserResolver,
 			},
 			"mockServices": &graphql.Field{
-				Type:    graphql.NewList(MockServiceGqlType),
-				Resolve: GetMockServicesResolver,
+				Type:    graphql.NewList(mockservice.MockServiceGqlType),
+				Resolve: mockservice.GetMockServicesResolver,
 			},
 			"mockService": &graphql.Field{
-				Type: MockServiceGqlType,
+				Type: mockservice.MockServiceGqlType,
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
 						Type: graphql.String,
 					},
 				},
-				Resolve: GetMockServiceResolver,
+				Resolve: mockservice.GetMockServiceResolver,
+			},
+			"workspace": &graphql.Field{
+				Type: workspace.WorkspaceGqlType,
+				Args: graphql.FieldConfigArgument{
+					"id": &graphql.ArgumentConfig{
+						Type: graphql.String,
+					},
+				},
+				Resolve: workspace.GetWorkspaceResolver,
 			},
 			"workspaces": &graphql.Field{
-				Type:    graphql.NewList(WorkspaceGqlType),
-				Resolve: GetWorkspacesResolver,
-			},
-			"userWorkspaces": &graphql.Field{
-				Type:    graphql.NewList(WorkspaceGqlType),
-				Resolve: GetUserWorkspacesResolver,
-			},
-			"userWorkspace": &graphql.Field{
-				Type: WorkspaceGqlType,
-				Args: graphql.FieldConfigArgument{
-					"workspaceId": &graphql.ArgumentConfig{
-						Type: graphql.String,
-					},
-				},
-				Resolve: GetUserWorkspaceResolver,
+				Type:    graphql.NewList(workspace.WorkspaceGqlType),
+				Resolve: workspace.GetWorkspacesResolver,
 			},
 			"workspaceSettings": &graphql.Field{
-				Type: graphql.NewList(WorkspaceSettingGqlType),
+				Type: graphql.NewList(workspace_setting.WorkspaceSettingGqlType),
 				Args: graphql.FieldConfigArgument{
 					"workspaceId": &graphql.ArgumentConfig{
 						Type: graphql.String,
 					},
 				},
-				Resolve: GetWorkspaceSettingsResolver,
+				Resolve: workspace_setting.GetWorkspaceSettingsResolver,
 			},
 			"workspaceSetting": &graphql.Field{
-				Type: WorkspaceSettingGqlType,
+				Type: workspace_setting.WorkspaceSettingGqlType,
 				Args: graphql.FieldConfigArgument{
 					"workspaceId": &graphql.ArgumentConfig{
 						Type: graphql.String,
@@ -70,7 +74,7 @@ var RootQuery = graphql.NewObject(
 						Type: graphql.String,
 					},
 				},
-				Resolve: GetWorkspaceSettingResolver,
+				Resolve: workspace_setting.GetWorkspaceSettingResolver,
 			},
 		},
 	},
@@ -81,13 +85,13 @@ var RootMutation = graphql.NewObject(
 		Name: "RootMutation",
 		Fields: graphql.Fields{
 			"createWorkspace": &graphql.Field{
-				Type: WorkspaceGqlType,
+				Type: workspace.WorkspaceGqlType,
 				Args: graphql.FieldConfigArgument{
 					"workspace": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(WorkspaceGqlInputType),
+						Type: graphql.NewNonNull(workspace.WorkspaceGqlInputType),
 					},
 				},
-				Resolve: CreateWorkspaceResolver,
+				Resolve: workspace.CreateWorkspaceResolver,
 			},
 			"deleteWorkspace": &graphql.Field{
 				Type: graphql.Boolean,
@@ -96,16 +100,16 @@ var RootMutation = graphql.NewObject(
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
-				Resolve: DeleteWorkspaceResolver,
+				Resolve: workspace.DeleteWorkspaceResolver,
 			},
 			"createEndpoint": &graphql.Field{
-				Type: EndpointGqlType,
+				Type: endpoint.EndpointGqlType,
 				Args: graphql.FieldConfigArgument{
 					"endpoint": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(EndpointGqlInputType),
+						Type: graphql.NewNonNull(endpoint.EndpointGqlInputType),
 					},
 				},
-				Resolve: CreateEndpointResolver,
+				Resolve: endpoint.CreateEndpointResolver,
 			},
 			"deleteEndpoint": &graphql.Field{
 				Type: graphql.Boolean,
@@ -114,25 +118,25 @@ var RootMutation = graphql.NewObject(
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
-				Resolve: DeleteEndpointResolver,
+				Resolve: endpoint.DeleteEndpointResolver,
 			},
 			"createScenario": &graphql.Field{
-				Type: ScenarioGqlType,
+				Type: scenario.ScenarioGqlType,
 				Args: graphql.FieldConfigArgument{
 					"scenario": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(ScenarioGqlInputType),
+						Type: graphql.NewNonNull(scenario.ScenarioGqlInputType),
 					},
 				},
-				Resolve: CreateScenarioResolver,
+				Resolve: scenario.CreateScenarioResolver,
 			},
 			"createUpstream": &graphql.Field{
-				Type: UpstreamGqlType,
+				Type: upstream.UpstreamGqlType,
 				Args: graphql.FieldConfigArgument{
 					"upstream": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(UpstreamGqlInputType),
+						Type: graphql.NewNonNull(upstream.UpstreamGqlInputType),
 					},
 				},
-				Resolve: CreateUpstreamResolver,
+				Resolve: upstream.CreateUpstreamResolver,
 			},
 			"deleteUpstream": &graphql.Field{
 				Type: graphql.Boolean,
@@ -141,16 +145,16 @@ var RootMutation = graphql.NewObject(
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
-				Resolve: DeleteUpstreamResolver,
+				Resolve: upstream.DeleteUpstreamResolver,
 			},
 			"createMockService": &graphql.Field{
-				Type: MockServiceGqlType,
+				Type: mockservice.MockServiceGqlType,
 				Args: graphql.FieldConfigArgument{
 					"mockService": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(MockServiceGqlInputType),
+						Type: graphql.NewNonNull(mockservice.MockServiceGqlInputType),
 					},
 				},
-				Resolve: CreateMockServiceResolver,
+				Resolve: mockservice.CreateMockServiceResolver,
 			},
 			"deleteMockService": &graphql.Field{
 				Type: graphql.Boolean,
@@ -159,10 +163,10 @@ var RootMutation = graphql.NewObject(
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
-				Resolve: DeleteMockServiceResolver,
+				Resolve: mockservice.DeleteMockServiceResolver,
 			},
 			"activateMockServiceScenario": &graphql.Field{
-				Type: EndpointConfigGqlType,
+				Type: workspace_setting.EndpointConfigGqlType,
 				Args: graphql.FieldConfigArgument{
 					"workspaceId": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
@@ -177,10 +181,10 @@ var RootMutation = graphql.NewObject(
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
-				Resolve: ActivateMockServiceScenarioResolver,
+				Resolve: workspace_setting.ActivateMockServiceScenarioResolver,
 			},
 			"addMockServiceToWorkspace": &graphql.Field{
-				Type: WorkspaceGqlType,
+				Type: workspace.WorkspaceGqlType,
 				Args: graphql.FieldConfigArgument{
 					"workspaceId": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
@@ -189,7 +193,7 @@ var RootMutation = graphql.NewObject(
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
-				Resolve: AddMockServiceToWorkspaceResolver,
+				Resolve: workspace_setting.AddMockServiceToWorkspaceResolver,
 			},
 		},
 	},

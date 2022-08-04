@@ -3,9 +3,12 @@ package management_api
 import (
 	"io"
 	"net/http"
+	"switchboard/internal/auth"
 	"switchboard/internal/common"
 	"switchboard/internal/db"
-	"switchboard/internal/gql"
+	"switchboard/internal/endpoint"
+	"switchboard/internal/scenario"
+	"switchboard/internal/user"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -20,9 +23,9 @@ func setupUnauthenticatedRoutes(r *gin.Engine) {
 		c.Writer.Write([]byte("pong"))
 	})
 
-	r.POST("/auth/login", LoginRoute)
-	r.POST("/auth/signup", SignUpRoute)
-	r.POST("/auth/logout", LogOutRoute)
+	r.POST("/auth/login", auth.LoginRoute)
+	r.POST("/auth/signup", auth.SignUpRoute)
+	r.POST("/auth/logout", auth.LogOutRoute)
 
 	r.POST("/randomdata", func(c *gin.Context) {
 		tmpl, err := io.ReadAll(c.Request.Body)
@@ -42,8 +45,8 @@ func setupUnauthenticatedRoutes(r *gin.Engine) {
 
 func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
 	schemaConfig := graphql.SchemaConfig{
-		Query:    gql.RootQuery,
-		Mutation: gql.RootMutation,
+		Query:    RootQuery,
+		Mutation: RootMutation,
 	}
 	schema, err := graphql.NewSchema(schemaConfig)
 	if err != nil {
@@ -71,14 +74,14 @@ func CreateRouter(name string, reload chan bool, quit chan<- bool) *gin.Engine {
 
 	setupUnauthenticatedRoutes(r)
 
-	r.Use(common.ParseAuthToken)
-	r.Use(gql.GraphQLAuthMiddleware)
+	r.Use(auth.ParseAuthToken)
+	r.Use(auth.GraphQLAuthMiddleware)
 
 	r.Any("/graphql", func(ctx *gin.Context) {
 		loaders := &db.Loaders{
-			Scenarios: dataloader.NewBatchedLoader(db.BatchLoadScenarios),
-			Endpoints: dataloader.NewBatchedLoader(db.BatchLoadEndpoints),
-			Users:     dataloader.NewBatchedLoader(db.BatchLoadUsers),
+			Scenarios: dataloader.NewBatchedLoader(scenario.BatchLoadScenarios),
+			Endpoints: dataloader.NewBatchedLoader(endpoint.BatchLoadEndpoints),
+			Users:     dataloader.NewBatchedLoader(user.BatchLoadUsers),
 		}
 		ctx.Set(db.LoadersCtxKey, loaders)
 		gqlHandler.ServeHTTP(ctx.Writer, ctx.Request.WithContext(ctx))

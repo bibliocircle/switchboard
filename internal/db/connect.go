@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var Client *mongo.Client
+var client *mongo.Client
 var Database *mongo.Database
 
 func databaseFromConnectionString(connectionString string) string {
@@ -31,12 +31,15 @@ func GetConnectionString() string {
 func Connect(ctx context.Context) error {
 	connectionString := GetConnectionString()
 	var err error
-	Client, err = mongo.Connect(ctx, options.Client().ApplyURI(connectionString))
+	client, err = mongo.Connect(ctx, options.Client().ApplyURI(connectionString))
 	if err != nil {
 		return err
 	} else {
+		if err := client.Ping(ctx, nil); err != nil {
+			return err
+		}
 		fmt.Println("successfully connected to the database!")
 	}
-	Database = Client.Database(databaseFromConnectionString(connectionString))
+	Database = client.Database(databaseFromConnectionString(connectionString))
 	return nil
 }

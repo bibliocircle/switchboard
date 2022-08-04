@@ -1,10 +1,11 @@
-package gql
+package endpoint
 
 import (
 	"fmt"
 	"switchboard/internal/common"
-	"switchboard/internal/db"
-	"switchboard/internal/models"
+	"switchboard/internal/gql"
+	"switchboard/internal/scenario"
+	"switchboard/internal/user"
 
 	"github.com/graphql-go/graphql"
 	"github.com/mitchellh/mapstructure"
@@ -51,25 +52,25 @@ var EndpointGqlType = graphql.NewObject(graphql.ObjectConfig{
 			Type: graphql.Int,
 		},
 		"scenarios": &graphql.Field{
-			Type: graphql.NewList(ScenarioGqlType),
+			Type: graphql.NewList(scenario.ScenarioGqlType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				endpointID := p.Source.(models.Endpoint).ID
-				scenarios, err := db.GetScenarios(endpointID)
+				endpointID := p.Source.(Endpoint).ID
+				scenarios, err := scenario.GetScenarios(endpointID)
 				if err != nil {
 					logrus.Errorln(err)
-					return make([]models.Scenario, 0), NewGqlError(common.ErrorGeneric, "could not retrieve scenarios")
+					return make([]scenario.Scenario, 0), gql.NewGqlError(common.ErrorGeneric, "could not retrieve scenarios")
 				}
 				return scenarios, nil
 			},
 		},
 		"createdBy": &graphql.Field{
-			Type: UserGqlType,
+			Type: user.UserGqlType,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				userId := p.Source.(models.Endpoint).CreatedBy
-				users, err := db.GetUserByID(userId)
+				userId := p.Source.(Endpoint).CreatedBy
+				users, err := user.GetUserByID(userId)
 				if err != nil {
 					logrus.Errorln(err)
-					return make([]models.User, 0), NewGqlError(common.ErrorGeneric, "could not resolve createdBy field")
+					return make([]user.User, 0), gql.NewGqlError(common.ErrorGeneric, "could not resolve createdBy field")
 				}
 				return users, nil
 			},
@@ -84,32 +85,32 @@ var EndpointGqlType = graphql.NewObject(graphql.ObjectConfig{
 })
 
 func CreateEndpointResolver(p graphql.ResolveParams) (interface{}, error) {
-	var input models.CreateEndpointRequestBody
+	var input CreateEndpointRequestBody
 	mapstructure.Decode(p.Args["endpoint"], &input)
 
-	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
-	createdEndpoint, createErr := db.CreateEndpoint(currentUser.ID, &input)
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*user.User)
+	createdEndpoint, createErr := CreateEndpoint(currentUser.ID, &input)
 	if createErr == nil {
 		return *createdEndpoint, nil
 	}
 
 	if createErr.ErrorCode == common.ErrorDuplicateEntity {
-		return nil, NewGqlError(common.ErrorDuplicateEntity, "duplicate endpoint")
+		return nil, gql.NewGqlError(common.ErrorDuplicateEntity, "duplicate endpoint")
 	}
 
-	return nil, NewGqlError(common.ErrorGeneric, "could not create endpoint")
+	return nil, gql.NewGqlError(common.ErrorGeneric, "could not create endpoint")
 }
 
 func DeleteEndpointResolver(p graphql.ResolveParams) (interface{}, error) {
 	endpointID := p.Args["endpointId"].(string)
-	currentUser := p.Context.Value(common.REQ_USER_KEY).(*models.User)
-	ok, err := db.DeleteEndpoint(currentUser.ID, endpointID)
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*user.User)
+	ok, err := DeleteEndpoint(currentUser.ID, endpointID)
 	if err != nil {
 		logrus.Errorln(fmt.Sprintf("could not delete endpoint %s. [error code: %s] [description: %s]", endpointID, err.ErrorCode, err.Description))
-		return false, NewGqlError(common.ErrorGeneric, "could not delete endpoint")
+		return false, gql.NewGqlError(common.ErrorGeneric, "could not delete endpoint")
 	}
 	if !ok {
-		return false, NewGqlError(common.ErrorNotFound, "endpoint not found")
+		return false, gql.NewGqlError(common.ErrorNotFound, "endpoint not found")
 	}
 
 	return true, nil

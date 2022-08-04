@@ -1,9 +1,12 @@
-package db
+package workspace_setting
 
 import (
 	"context"
 	"switchboard/internal/common"
-	"switchboard/internal/models"
+	"switchboard/internal/db"
+	"switchboard/internal/endpoint"
+	"switchboard/internal/mockservice"
+	"switchboard/internal/scenario"
 	"switchboard/internal/util"
 	"time"
 
@@ -13,34 +16,34 @@ import (
 )
 
 func AddMockServiceToWorkspace(userID, workspaceID, mockServiceID string) *common.DetailedError {
-	endpoints, errEp := GetEndpoints(mockServiceID)
+	endpoints, errEp := endpoint.GetEndpoints(mockServiceID)
 	if errEp != nil {
 		return errEp
 	}
 
-	mockService, errMs := GetMockServiceByID(mockServiceID)
+	ms, errMs := mockservice.GetMockServiceByID(mockServiceID)
 	if errMs != nil {
 		return errMs
 	}
 
-	endpointConfigs := make([]models.EndpointConfig, 0)
+	endpointConfigs := make([]EndpointConfig, 0)
 
 	for _, ep := range endpoints {
-		sc := make([]models.ScenarioConfig, 0)
-		scenarios, errSc := GetScenarios(ep.ID)
+		sc := make([]ScenarioConfig, 0)
+		scenarios, errSc := scenario.GetScenarios(ep.ID)
 		if errSc != nil {
-			return GetDbError(errSc)
+			return db.GetDbError(errSc)
 		}
 
 		for _, s := range scenarios {
-			sc = append(sc, models.ScenarioConfig{
+			sc = append(sc, ScenarioConfig{
 				ID:         util.UUIDv4(),
 				ScenarioID: s.ID,
 				IsActive:   s.IsDefault,
 			})
 		}
 
-		endpointConfigs = append(endpointConfigs, models.EndpointConfig{
+		endpointConfigs = append(endpointConfigs, EndpointConfig{
 			ID:              util.UUIDv4(),
 			EndpointID:      ep.ID,
 			ScenarioConfigs: sc,
@@ -50,26 +53,26 @@ func AddMockServiceToWorkspace(userID, workspaceID, mockServiceID string) *commo
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wssCol := Database.Collection(WORKSPACE_SETTINGS_COLLECTION)
+	wssCol := db.Database.Collection(db.WORKSPACE_SETTINGS_COLLECTION)
 
-	_, insertErr := wssCol.InsertOne(ctx, models.WorkspaceSetting{
+	_, insertErr := wssCol.InsertOne(ctx, WorkspaceSetting{
 		ID:              util.UUIDv4(),
 		WorkspaceID:     workspaceID,
 		MockServiceID:   mockServiceID,
-		Config:          mockService.Config,
+		Config:          ms.Config,
 		EndpointConfigs: endpointConfigs,
 	})
 	if insertErr != nil {
-		return GetDbError(insertErr)
+		return db.GetDbError(insertErr)
 	}
 
 	return nil
 }
 
-func GetWorkspaceSettings(workspaceID string) (*[]models.WorkspaceSetting, *common.DetailedError) {
+func GetWorkspaceSettings(workspaceID string) (*[]*WorkspaceSetting, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wssCol := Database.Collection(WORKSPACE_SETTINGS_COLLECTION)
+	wssCol := db.Database.Collection(db.WORKSPACE_SETTINGS_COLLECTION)
 	findOpts := &options.FindOptions{
 		Sort: &map[string]int64{
 			"createdAt": 1,
@@ -80,22 +83,22 @@ func GetWorkspaceSettings(workspaceID string) (*[]models.WorkspaceSetting, *comm
 		{Key: "workspaceId", Value: workspaceID},
 	}, findOpts)
 	if errFind != nil {
-		return nil, GetDbError(errFind)
+		return nil, db.GetDbError(errFind)
 	}
-	result := make([]models.WorkspaceSetting, 0)
+	result := make([]*WorkspaceSetting, 0)
 	err := cursor.All(ctx, &result)
 	if err != nil {
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	return &result, nil
 }
 
-func GetWorkspaceSetting(workspaceID, mockServiceID string) (*models.WorkspaceSetting, *common.DetailedError) {
+func GetWorkspaceSetting(workspaceID, mockServiceID string) (*WorkspaceSetting, *common.DetailedError) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wssCol := Database.Collection(WORKSPACE_SETTINGS_COLLECTION)
+	wssCol := db.Database.Collection(db.WORKSPACE_SETTINGS_COLLECTION)
 
-	var wss models.WorkspaceSetting
+	var wss WorkspaceSetting
 	err := wssCol.FindOne(ctx, bson.D{
 		{Key: "workspaceId", Value: workspaceID},
 		{Key: "mockServiceId", Value: mockServiceID},
@@ -105,7 +108,7 @@ func GetWorkspaceSetting(workspaceID, mockServiceID string) (*models.WorkspaceSe
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		return nil, GetDbError(err)
+		return nil, db.GetDbError(err)
 	}
 	return &wss, nil
 }
@@ -116,11 +119,11 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 		return false, errWss
 	}
 
-	newEndpointConfigs := make([]models.EndpointConfig, len(wss.EndpointConfigs))
+	newEndpointConfigs := make([]EndpointConfig, len(wss.EndpointConfigs))
 
 	for endpointConfigIndex, e := range wss.EndpointConfigs {
 		if e.EndpointID == endpointID {
-			newScenarioConfigs := make([]models.ScenarioConfig, len(e.ScenarioConfigs))
+			newScenarioConfigs := make([]ScenarioConfig, len(e.ScenarioConfigs))
 			for scenarioConfigIndex, sc := range e.ScenarioConfigs {
 				if sc.ScenarioID == scenarioID {
 					sc.IsActive = true
@@ -129,14 +132,14 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 				}
 				newScenarioConfigs[scenarioConfigIndex] = sc
 			}
-			newEndpointConfigs[endpointConfigIndex] = models.EndpointConfig{
+			newEndpointConfigs[endpointConfigIndex] = EndpointConfig{
 				ID:              e.ID,
 				EndpointID:      e.EndpointID,
 				ScenarioConfigs: newScenarioConfigs,
 				ResponseDelay:   e.ResponseDelay,
 			}
 		} else {
-			newEndpointConfigs[endpointConfigIndex] = models.EndpointConfig{
+			newEndpointConfigs[endpointConfigIndex] = EndpointConfig{
 				ID:              e.ID,
 				EndpointID:      e.EndpointID,
 				ScenarioConfigs: e.ScenarioConfigs,
@@ -147,14 +150,14 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	wssCol := Database.Collection("workspace_settings")
+	wssCol := db.Database.Collection("workspace_settings")
 
 	_, err := wssCol.UpdateOne(ctx, bson.D{
 		{Key: "workspaceId", Value: workspaceID},
 		{Key: "mockServiceId", Value: mockServiceID},
 	}, bson.D{{
 		Key: "$set",
-		Value: models.WorkspaceSetting{
+		Value: WorkspaceSetting{
 			ID:              wss.ID,
 			WorkspaceID:     wss.WorkspaceID,
 			MockServiceID:   wss.MockServiceID,
@@ -164,7 +167,7 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 	}})
 
 	if err != nil {
-		return false, GetDbError(err)
+		return false, db.GetDbError(err)
 	}
 
 	return true, nil
