@@ -132,20 +132,55 @@ func ActivateWsMockServiceScenario(workspaceID, mockServiceID, endpointID, scena
 				}
 				newScenarioConfigs[scenarioConfigIndex] = sc
 			}
-			newEndpointConfigs[endpointConfigIndex] = EndpointConfig{
-				ID:              e.ID,
-				EndpointID:      e.EndpointID,
-				ScenarioConfigs: newScenarioConfigs,
-				ResponseDelay:   e.ResponseDelay,
-			}
-		} else {
-			newEndpointConfigs[endpointConfigIndex] = EndpointConfig{
-				ID:              e.ID,
-				EndpointID:      e.EndpointID,
-				ScenarioConfigs: e.ScenarioConfigs,
-				ResponseDelay:   e.ResponseDelay,
-			}
+			e.ScenarioConfigs = newScenarioConfigs
 		}
+		newEndpointConfigs[endpointConfigIndex] = e
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	wssCol := db.Database.Collection("workspace_settings")
+
+	_, err := wssCol.UpdateOne(ctx, bson.D{
+		{Key: "workspaceId", Value: workspaceID},
+		{Key: "mockServiceId", Value: mockServiceID},
+	}, bson.D{{
+		Key: "$set",
+		Value: WorkspaceSetting{
+			ID:              wss.ID,
+			WorkspaceID:     wss.WorkspaceID,
+			MockServiceID:   wss.MockServiceID,
+			Config:          wss.Config,
+			EndpointConfigs: newEndpointConfigs,
+		},
+	}})
+
+	if err != nil {
+		return false, db.GetDbError(err)
+	}
+
+	return true, nil
+}
+
+func CreateInterceptionRule(userID, workspaceID, mockServiceID, endpointID string, ir CreateInterceptionRuleRequestBody) (bool, *common.DetailedError) {
+	wss, errWss := GetWorkspaceSetting(workspaceID, mockServiceID)
+	if errWss != nil {
+		return false, errWss
+	}
+
+	newEndpointConfigs := make([]EndpointConfig, len(wss.EndpointConfigs))
+
+	for endpointConfigIndex, e := range wss.EndpointConfigs {
+		if e.EndpointID == endpointID {
+			newInterceptionRules := append(e.InterceptionRules, InterceptionRule{
+				ID:                util.UUIDv4(),
+				Name:              ir.Name,
+				MatcherExpression: ir.MatcherExpression,
+				TargetScenarioId:  ir.TargetScenarioId, // TODO: validate if the TargetScenario exists
+			})
+			e.InterceptionRules = newInterceptionRules
+		}
+		newEndpointConfigs[endpointConfigIndex] = e
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

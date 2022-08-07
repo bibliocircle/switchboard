@@ -1,6 +1,7 @@
 package workspace_setting
 
 import (
+	"fmt"
 	"switchboard/internal/common"
 	"switchboard/internal/db"
 	"switchboard/internal/endpoint"
@@ -12,8 +13,42 @@ import (
 
 	"github.com/graph-gophers/dataloader"
 	"github.com/graphql-go/graphql"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
+
+var InterceptionRuleGqlInputType = graphql.NewInputObject(graphql.InputObjectConfig{
+	Name: "InterceptionRuleInput",
+	Fields: graphql.InputObjectConfigFieldMap{
+		"name": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"matcherExpression": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"TargetScenarioId": &graphql.InputObjectFieldConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+	},
+})
+
+var InterceptionRuleGqlType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "InterceptionRule",
+	Fields: graphql.Fields{
+		"id": &graphql.Field{
+			Type: graphql.String,
+		},
+		"name": &graphql.Field{
+			Type: graphql.String,
+		},
+		"matcherExpression": &graphql.Field{
+			Type: graphql.String,
+		},
+		"targetScenarioId": &graphql.Field{
+			Type: graphql.String,
+		},
+	},
+})
 
 var ScenarioConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "ScenarioConfig",
@@ -55,6 +90,9 @@ var EndpointConfigGqlType = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"scenarioConfigs": &graphql.Field{
 			Type: graphql.NewList(ScenarioConfigGqlType),
+		},
+		"interceptionRules": &graphql.Field{
+			Type: graphql.NewList(InterceptionRuleGqlType),
 		},
 		"responseDelay": &graphql.Field{
 			Type: graphql.Int,
@@ -209,4 +247,24 @@ func AddMockServiceToWorkspaceResolver(p graphql.ResolveParams) (interface{}, er
 	}
 
 	return nil, gql.NewGqlError(common.ErrorGeneric, "could not add mock service to workspace")
+}
+
+func CreateInterceptionRuleResolver(p graphql.ResolveParams) (interface{}, error) {
+	var interceptionRule CreateInterceptionRuleRequestBody
+	workspaceID := p.Args["workspaceId"].(string)
+	mockServiceID := p.Args["mockServiceId"].(string)
+	endpointID := p.Args["endpointId"].(string)
+	mapstructure.Decode(p.Args["interceptionRule"], &interceptionRule)
+
+	currentUser := p.Context.Value(common.REQ_USER_KEY).(*user.User)
+	created, err := CreateInterceptionRule(currentUser.ID, workspaceID, mockServiceID, endpointID, interceptionRule)
+	if err != nil {
+		logrus.Error(fmt.Sprintf("could not create interception rule for %s\n", endpointID))
+		return nil, gql.NewGqlError(common.ErrorGeneric, "could not create interception rule")
+	}
+	if !created {
+		return nil, gql.NewGqlError(common.ErrorNotFound, "no such endpoint found")
+	}
+
+	return created, nil
 }

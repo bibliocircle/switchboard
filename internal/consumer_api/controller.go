@@ -3,14 +3,26 @@ package consumer_api
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"switchboard/internal/common"
 	"switchboard/internal/scenario"
 	"switchboard/internal/workspace_setting"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
+
+type requestDetails struct {
+	Method   string              `json:"method"`
+	Hostname string              `json:"hostname"`
+	Port     string              `json:"port"`
+	Host     string              `json:"host"`
+	Path     string              `json:"path"`
+	Body     string              `json:"body"`
+	Headers  map[string][]string `json:"headers"`
+}
 
 func activateHTTPResponseScenario(cfg *scenario.HTTPResponseScenarioConfig, ctx *gin.Context) {
 	ctx.Status(int(cfg.StatusCode))
@@ -47,6 +59,22 @@ func activateScenario(sc *scenario.Scenario, ctx *gin.Context) {
 	}
 }
 
+func getRequestDetails(req *http.Request) (*requestDetails, error) {
+	bodyBytes, errBody := ioutil.ReadAll(req.Body)
+	if errBody != nil {
+		return nil, errBody
+	}
+	return &requestDetails{
+		Method:   req.Method,
+		Port:     req.URL.Port(),
+		Hostname: req.URL.Hostname(),
+		Host:     req.Host,
+		Path:     req.URL.Path,
+		Headers:  req.Header,
+		Body:     string(bodyBytes),
+	}, nil
+}
+
 func CreateRoute(mockServiceID, endpointID string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
@@ -70,12 +98,34 @@ func CreateRoute(mockServiceID, endpointID string) gin.HandlerFunc {
 		var activeScenarioId string
 		for _, ec := range wss.EndpointConfigs {
 			if ec.EndpointID == eID {
+				scenarioFound := false
 				for _, sc := range ec.ScenarioConfigs {
-					if sc.IsActive {
-						activeScenarioId = sc.ScenarioID
+					if scenarioFound {
 						break
 					}
+					if sc.IsActive {
+						activeScenarioId = sc.ScenarioID
+						scenarioFound = true
+					}
+					// Run interception rules
+					for _, ir := range ec.InterceptionRules {
+						req, errR := getRequestDetails(c.Request)
+						reqData, errM := json.Marshal(req)
+						if errR != nil || errM != nil {
+							logrus.Errorln(errM, errR)
+							c.JSON(http.StatusInternalServerError, gin.H{
+								"error": "could not read request details",
+							})
+							return
+						}
+						matched := common.ApplyJsonLogic(ir.MatcherExpression, string(reqData))
+						if matched {
+							activeScenarioId = ir.TargetScenarioId
+							scenarioFound = true
+						}
+					}
 				}
+				break
 			}
 		}
 

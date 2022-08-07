@@ -183,6 +183,24 @@ var RootMutation = graphql.NewObject(
 				},
 				Resolve: workspace_setting.ActivateMockServiceScenarioResolver,
 			},
+			"createInterceptionRule": &graphql.Field{
+				Type: graphql.Boolean,
+				Args: graphql.FieldConfigArgument{
+					"workspaceId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"mockServiceId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"endpointId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"interceptionRule": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(workspace_setting.InterceptionRuleGqlInputType),
+					},
+				},
+				Resolve: workspace_setting.CreateInterceptionRuleResolver,
+			},
 			"addMockServiceToWorkspace": &graphql.Field{
 				Type: workspace.WorkspaceGqlType,
 				Args: graphql.FieldConfigArgument{
