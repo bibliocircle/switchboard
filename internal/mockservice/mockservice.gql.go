@@ -26,7 +26,7 @@ var MockServiceGqlInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 			Type: graphql.NewNonNull(graphql.String),
 		},
 		"config": &graphql.InputObjectFieldConfig{
-			Type: graphql.NewNonNull(GlobalMockServiceConfigGqlInputType),
+			Type: GlobalMockServiceConfigGqlInputType,
 		},
 	},
 })
